@@ -1,0 +1,2368 @@
+<!-- Ultimate Game Stash file--><!-- For the regularly updating doc go to https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/ --><!DOCTYPE html><html><head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mamayaya1/game@f3a882424a8f28d07bdf456b251d889725c4c1e4/projects/among-us/style.css"> </head> <body> <script> window.addEventListener("keydown", function(e) { if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) { e.preventDefault(); } }, false); </script> <noscript> <div id="notSupportedWrap"> <h2 id="notSupportedTitle">This content requires JavaScript</h2> <p class="notSupportedMessage">JavaScript appears to be disabled. Please enable it to view this content. Thanks! :)</p> </div> </noscript> <script>
+"use strict";!function(){var e=!!document.querySelector('script[src*="kaspersky"]'),t=document.createElement("canvas"),r=[];if(!(!t.getContext("webgl")&&!t.getContext("experimental-webgl"))||r.push("WebGL"),"undefined"==typeof WebAssembly&&r.push("WebAssembly"),"noModule"in HTMLScriptElement.prototype||r.push("JavaScript Modules"),0!==r.length||e){var o=document.createElement("div");o.id="notSupportedWrap",document.body.appendChild(o);var s=document.createElement("h2");s.id="notSupportedTitle",s.textContent=e?"Kaspersky Internet Security broke this export":"Software update needed",o.appendChild(s);var n=document.createElement("p");n.className="notSupportedMessage";var a="This content is not supported because your device's software is out-of-date. ",i=navigator.userAgent;/android/i.test(i)?a+='<br><br>On Android, fix this by making sure the <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System Webview</a> app has updates enabled and is up-to-date.':/iphone|ipad|ipod/i.test(i)?a+="<br><br>Note: using the <strong>iOS simulator</strong> requires <strong>Xcode 12+</strong>. Otherwise try testing on a real device instead.":!/msie/i.test(i)&&!/trident/i.test(i)||/edge\//i.test(i)?e?a="It appears a script was added to this export by Kaspersky software. This prevents the exported project from working. Try disabling Kaspersky and exporting again.":a+="Try installing any available software updates. Alternatively try on a different device.":a+="<br><br>Note: <strong>Internet Explorer</strong> is not supported. Try using <a href='https://www.google.com/chrome'>Chrome</a> or <a href='https://www.mozilla.org/firefox'>Firefox</a> instead.",a+="<br><br><em>Missing features: "+r.join(", ")+"<br>User agent: "+navigator.userAgent+"</em>",n.innerHTML=a,o.appendChild(n)}else window.C3_IsSupported=!0}();
+
+</script> <script type="module">
+// remote:https://cdn.jsdelivr.net/gh/mamayaya1/game@f3a882424a8f28d07bdf456b251d889725c4c1e4/projects/among-us/scripts/offlineclient.js
+{
+  class s {
+    constructor() {
+      this._broadcastChannel = "undefined" == typeof BroadcastChannel ? null : new BroadcastChannel("offline"), this._queuedMessages = [], this._onMessageCallback = null, this._broadcastChannel && (this._broadcastChannel.onmessage = (s2) => this._OnBroadcastChannelMessage(s2));
+    }
+    _OnBroadcastChannelMessage(s2) {
+      this._onMessageCallback ? this._onMessageCallback(s2) : this._queuedMessages.push(s2);
+    }
+    SetMessageCallback(s2) {
+      this._onMessageCallback = s2;
+      for (let s3 of this._queuedMessages) this._onMessageCallback(s3);
+      this._queuedMessages.length = 0;
+    }
+  }
+  window.OfflineClientInfo = new s();
+}
+
+</script> <script type="module">
+// remote:https://cdn.jsdelivr.net/gh/gahaden/ags@4f1a2b8755bcbf67ba043a7eca6c2e05d0b5bfe5/main.js
+window.DOMHandler = class {
+  constructor(e, t) {
+    this._iRuntime = e, this._componentId = t, this._hasTickCallback = false, this._tickCallback = () => this.Tick();
+  }
+  Attach() {
+  }
+  PostToRuntime(e, t, i, s) {
+    this._iRuntime.PostToRuntimeComponent(this._componentId, e, t, i, s);
+  }
+  PostToRuntimeAsync(e, t, i, s) {
+    return this._iRuntime.PostToRuntimeComponentAsync(this._componentId, e, t, i, s);
+  }
+  _PostToRuntimeMaybeSync(e, t, i) {
+    this._iRuntime.UsesWorker() ? this.PostToRuntime(e, t, i) : this._iRuntime._GetLocalRuntime()._OnMessageFromDOM({ type: "event", component: this._componentId, handler: e, dispatchOpts: i || null, data: t, responseId: null });
+  }
+  AddRuntimeMessageHandler(e, t) {
+    this._iRuntime.AddRuntimeComponentMessageHandler(this._componentId, e, t);
+  }
+  AddRuntimeMessageHandlers(e) {
+    for (const [t, i] of e) this.AddRuntimeMessageHandler(t, i);
+  }
+  GetRuntimeInterface() {
+    return this._iRuntime;
+  }
+  GetComponentID() {
+    return this._componentId;
+  }
+  _StartTicking() {
+    this._hasTickCallback || (this._iRuntime._AddRAFCallback(this._tickCallback), this._hasTickCallback = true);
+  }
+  _StopTicking() {
+    this._hasTickCallback && (this._iRuntime._RemoveRAFCallback(this._tickCallback), this._hasTickCallback = false);
+  }
+  Tick() {
+  }
+}, window.RateLimiter = class {
+  constructor(e, t) {
+    this._callback = e, this._interval = t, this._timerId = -1, this._lastCallTime = -1 / 0, this._timerCallFunc = () => this._OnTimer(), this._ignoreReset = false, this._canRunImmediate = false;
+  }
+  SetCanRunImmediate(e) {
+    this._canRunImmediate = !!e;
+  }
+  Call() {
+    if (-1 !== this._timerId) return;
+    const e = Date.now(), t = e - this._lastCallTime, i = this._interval;
+    t >= i && this._canRunImmediate ? (this._lastCallTime = e, this._RunCallback()) : this._timerId = self.setTimeout(this._timerCallFunc, Math.max(i - t, 4));
+  }
+  _RunCallback() {
+    this._ignoreReset = true, this._callback(), this._ignoreReset = false;
+  }
+  Reset() {
+    this._ignoreReset || (this._CancelTimer(), this._lastCallTime = Date.now());
+  }
+  _OnTimer() {
+    this._timerId = -1, this._lastCallTime = Date.now(), this._RunCallback();
+  }
+  _CancelTimer() {
+    -1 !== this._timerId && (self.clearTimeout(this._timerId), this._timerId = -1);
+  }
+  Release() {
+    this._CancelTimer(), this._callback = null, this._timerCallFunc = null;
+  }
+}, window.DOMElementHandler = class extends self.DOMHandler {
+  constructor(e, t) {
+    super(e, t), this._elementMap = /* @__PURE__ */ new Map(), this._autoAttach = true, this.AddRuntimeMessageHandlers([["create", (e2) => this._OnCreate(e2)], ["destroy", (e2) => this._OnDestroy(e2)], ["set-visible", (e2) => this._OnSetVisible(e2)], ["update-position", (e2) => this._OnUpdatePosition(e2)], ["update-state", (e2) => this._OnUpdateState(e2)], ["focus", (e2) => this._OnSetFocus(e2)], ["set-css-style", (e2) => this._OnSetCssStyle(e2)], ["set-attribute", (e2) => this._OnSetAttribute(e2)], ["remove-attribute", (e2) => this._OnRemoveAttribute(e2)]]), this.AddDOMElementMessageHandler("get-element", ((e2) => e2));
+  }
+  SetAutoAttach(e) {
+    this._autoAttach = !!e;
+  }
+  AddDOMElementMessageHandler(e, t) {
+    this.AddRuntimeMessageHandler(e, ((e2) => {
+      const i = e2.elementId, s = this._elementMap.get(i);
+      return t(s, e2);
+    }));
+  }
+  _OnCreate(e) {
+    const t = e.elementId, i = this.CreateElement(t, e);
+    this._elementMap.set(t, i), e.isVisible || (i.style.display = "none");
+    const s = this._GetFocusElement(i);
+    s.addEventListener("focus", ((e2) => this._OnFocus(t))), s.addEventListener("blur", ((e2) => this._OnBlur(t))), this._autoAttach && document.body.appendChild(i);
+  }
+  CreateElement(e, t) {
+    throw new Error("required override");
+  }
+  DestroyElement(e) {
+  }
+  _OnDestroy(e) {
+    const t = e.elementId, i = this._elementMap.get(t);
+    this.DestroyElement(i), this._autoAttach && i.parentElement.removeChild(i), this._elementMap.delete(t);
+  }
+  PostToRuntimeElement(e, t, i) {
+    i || (i = {}), i.elementId = t, this.PostToRuntime(e, i);
+  }
+  _PostToRuntimeElementMaybeSync(e, t, i) {
+    i || (i = {}), i.elementId = t, this._PostToRuntimeMaybeSync(e, i);
+  }
+  _OnSetVisible(e) {
+    this._autoAttach && (this._elementMap.get(e.elementId).style.display = e.isVisible ? "" : "none");
+  }
+  _OnUpdatePosition(e) {
+    if (!this._autoAttach) return;
+    const t = this._elementMap.get(e.elementId);
+    t.style.left = e.left + "px", t.style.top = e.top + "px", t.style.width = e.width + "px", t.style.height = e.height + "px";
+    const i = e.fontSize;
+    null !== i && (t.style.fontSize = i + "em");
+  }
+  _OnUpdateState(e) {
+    const t = this._elementMap.get(e.elementId);
+    this.UpdateState(t, e);
+  }
+  UpdateState(e, t) {
+    throw new Error("required override");
+  }
+  _GetFocusElement(e) {
+    return e;
+  }
+  _OnFocus(e) {
+    this.PostToRuntimeElement("elem-focused", e);
+  }
+  _OnBlur(e) {
+    this.PostToRuntimeElement("elem-blurred", e);
+  }
+  _OnSetFocus(e) {
+    const t = this._GetFocusElement(this._elementMap.get(e.elementId));
+    e.focus ? t.focus() : t.blur();
+  }
+  _OnSetCssStyle(e) {
+    this._elementMap.get(e.elementId).style[e.prop] = e.val;
+  }
+  _OnSetAttribute(e) {
+    this._elementMap.get(e.elementId).setAttribute(e.name, e.val);
+  }
+  _OnRemoveAttribute(e) {
+    this._elementMap.get(e.elementId).removeAttribute(e.name);
+  }
+  GetElementById(e) {
+    return this._elementMap.get(e);
+  }
+};
+{
+  let t = function(e2, t2) {
+    const i2 = document.createElement("script");
+    if (i2.async = false, "module" === t2 && (i2.type = "module"), !e2.isStringSrc) return new Promise(((t3, s2) => {
+      i2.onload = t3, i2.onerror = s2, i2.src = e2, document.head.appendChild(i2);
+    }));
+    i2.textContent = e2.str, document.head.appendChild(i2);
+  }, n = function() {
+    if (!i) {
+      try {
+        new Worker("blob://", { get type() {
+          s = true;
+        } });
+      } catch (e2) {
+      }
+      i = true;
+    }
+    return s;
+  }, d = function(e2) {
+    return new Promise(((t2, i2) => {
+      const s2 = new FileReader();
+      s2.onload = (e3) => t2(e3.target.result), s2.onerror = (e3) => i2(e3), s2.readAsArrayBuffer(e2);
+    }));
+  }, w = function(e2) {
+    return g.has(e2);
+  };
+  const e = /(iphone|ipod|ipad|macos|macintosh|mac os x)/i.test(navigator.userAgent);
+  let i = false, s = false;
+  let o = new Audio();
+  const a = { "audio/webm; codecs=opus": !!o.canPlayType("audio/webm; codecs=opus"), "audio/ogg; codecs=opus": !!o.canPlayType("audio/ogg; codecs=opus"), "audio/webm; codecs=vorbis": !!o.canPlayType("audio/webm; codecs=vorbis"), "audio/ogg; codecs=vorbis": !!o.canPlayType("audio/ogg; codecs=vorbis"), "audio/mp4": !!o.canPlayType("audio/mp4"), "audio/mpeg": !!o.canPlayType("audio/mpeg") };
+  async function r(e2) {
+    const t2 = await d(e2);
+    return new TextDecoder("utf-8").decode(t2);
+  }
+  o = null;
+  const c = [];
+  let l = 0;
+  const h = 8;
+  window.RealFile = window.File;
+  const u = [], _ = /* @__PURE__ */ new Map(), m = /* @__PURE__ */ new Map();
+  let p = 0;
+  const f = [];
+  self.runOnStartup = function(e2) {
+    if ("function" != typeof e2) throw new Error("runOnStartup called without a function");
+    f.push(e2);
+  };
+  const g = /* @__PURE__ */ new Set(["cordova", "playable-ad", "instant-games"]);
+  window.RuntimeInterface = class i2 {
+    constructor(e2) {
+      this._useWorker = e2.useWorker, this._messageChannelPort = null, this._baseUrl = "", this._scriptFolder = e2.scriptFolder, this._scriptsType = e2.scriptsType, this._workerScriptURLs = {}, this._worker = null, this._localRuntime = null, this._domHandlers = [], this._runtimeDomHandler = null, this._canvas = null, this._jobScheduler = null, this._rafId = -1, this._rafFunc = () => this._OnRAFCallback(), this._rafCallbacks = [], this._exportType = e2.exportType, !this._useWorker || "undefined" != typeof OffscreenCanvas && navigator.userActivation && ("module" !== this._scriptsType || n()) || (this._useWorker = false), w(this._exportType) && this._useWorker && (console.warn("[C3 runtime] Worker mode is enabled and supported, but is disabled in WebViews due to crbug.com/923007. Reverting to DOM mode."), this._useWorker = false), this._localFileBlobs = null, this._localFileStrings = null, "html5" !== this._exportType && "playable-ad" !== this._exportType || "file" !== location.protocol.substr(0, 4) || alert("Exported games won't work until you upload them. (When running on the file: protocol, browsers block many features from working for security reasons.)"), this.AddRuntimeComponentMessageHandler("runtime", "cordova-fetch-local-file", ((e3) => this._OnCordovaFetchLocalFile(e3))), this.AddRuntimeComponentMessageHandler("runtime", "create-job-worker", ((e3) => this._OnCreateJobWorker(e3))), "cordova" === this._exportType ? document.addEventListener("deviceready", (() => this._Init(e2))) : this._Init(e2);
+    }
+    Release() {
+      this._CancelAnimationFrame(), this._messageChannelPort && (this._messageChannelPort.onmessage = null, this._messageChannelPort = null), this._worker && (this._worker.terminate(), this._worker = null), this._localRuntime && (this._localRuntime.Release(), this._localRuntime = null), this._canvas && (this._canvas.parentElement.removeChild(this._canvas), this._canvas = null);
+    }
+    GetCanvas() {
+      return this._canvas;
+    }
+    GetBaseURL() {
+      return this._baseUrl;
+    }
+    UsesWorker() {
+      return this._useWorker;
+    }
+    GetExportType() {
+      return this._exportType;
+    }
+    GetScriptFolder() {
+      return this._scriptFolder;
+    }
+    IsiOSCordova() {
+      return e && "cordova" === this._exportType;
+    }
+    IsiOSWebView() {
+      return e && w(this._exportType) || navigator.standalone;
+    }
+    async _Init(e2) {
+      if ("playable-ad" === this._exportType) {
+        this._localFileBlobs = self.c3_base64files, this._localFileStrings = {}, await this._ConvertDataUrisToBlobs();
+        for (let t3 = 0, i3 = e2.engineScripts.length; t3 < i3; ++t3) {
+          const i4 = e2.engineScripts[t3].toLowerCase();
+          this._localFileStrings.hasOwnProperty(i4) ? e2.engineScripts[t3] = { isStringSrc: true, str: this._localFileStrings[i4] } : this._localFileBlobs.hasOwnProperty(i4) && (e2.engineScripts[t3] = URL.createObjectURL(this._localFileBlobs[i4]));
+        }
+      }
+      if (e2.baseUrl) this._baseUrl = e2.baseUrl;
+      else {
+        const e3 = location.origin;
+        this._baseUrl = ("null" === e3 ? "file:///" : e3) + location.pathname;
+        const t3 = this._baseUrl.lastIndexOf("/");
+        -1 !== t3 && (this._baseUrl = this._baseUrl.substr(0, t3 + 1));
+      }
+      e2.workerScripts && (this._workerScriptURLs = e2.workerScripts);
+      const t2 = new MessageChannel();
+      this._messageChannelPort = t2.port1, this._messageChannelPort.onmessage = (e3) => this._OnMessageFromRuntime(e3.data), window.c3_addPortMessageHandler && window.c3_addPortMessageHandler(((e3) => this._OnMessageFromDebugger(e3))), this._jobScheduler = new self.JobSchedulerDOM(this), await this._jobScheduler.Init(), this.MaybeForceBodySize(), "object" == typeof window.StatusBar && window.StatusBar.hide(), "object" == typeof window.AndroidFullScreen && window.AndroidFullScreen.immersiveMode(), this._useWorker ? await this._InitWorker(e2, t2.port2) : await this._InitDOM(e2, t2.port2);
+    }
+    _GetWorkerURL(e2) {
+      let t2;
+      return t2 = this._workerScriptURLs.hasOwnProperty(e2) ? this._workerScriptURLs[e2] : e2.endsWith("/workermain.js") && this._workerScriptURLs.hasOwnProperty("workermain.js") ? this._workerScriptURLs["workermain.js"] : "playable-ad" === this._exportType && this._localFileBlobs.hasOwnProperty(e2.toLowerCase()) ? this._localFileBlobs[e2.toLowerCase()] : e2, t2 instanceof Blob && (t2 = URL.createObjectURL(t2)), t2;
+    }
+    async CreateWorker(e2, t2, i3) {
+      if (e2.startsWith("blob:")) return new Worker(e2, i3);
+      if (this.IsiOSCordova() && "file:" === location.protocol) {
+        const t3 = await this.CordovaFetchLocalFileAsArrayBuffer(this._scriptFolder + e2), s3 = new Blob([t3], { type: "application/javascript" });
+        return new Worker(URL.createObjectURL(s3), i3);
+      }
+      const s2 = new URL(e2, t2);
+      if (location.origin !== s2.origin) {
+        const e3 = await fetch(s2);
+        if (!e3.ok) throw new Error("failed to fetch worker script");
+        const t3 = await e3.blob();
+        return new Worker(URL.createObjectURL(t3), i3);
+      }
+      return new Worker(s2, i3);
+    }
+    _GetWindowInnerWidth() {
+      return Math.max(window.innerWidth, 1);
+    }
+    _GetWindowInnerHeight() {
+      return Math.max(window.innerHeight, 1);
+    }
+    MaybeForceBodySize() {
+      if (this.IsiOSWebView()) {
+        const e2 = document.documentElement.style, t2 = document.body.style, i3 = window.innerWidth < window.innerHeight, s2 = i3 ? window.screen.width : window.screen.height, n2 = i3 ? window.screen.height : window.screen.width;
+        t2.height = e2.height = n2 + "px", t2.width = e2.width = s2 + "px";
+      }
+    }
+    _GetCommonRuntimeOptions(e2) {
+      return { baseUrl: this._baseUrl, windowInnerWidth: this._GetWindowInnerWidth(), windowInnerHeight: this._GetWindowInnerHeight(), devicePixelRatio: window.devicePixelRatio, isFullscreen: i2.IsDocumentFullscreen(), projectData: e2.projectData, scriptsType: e2.scriptsType, previewImageBlobs: window.cr_previewImageBlobs || this._localFileBlobs, previewProjectFileBlobs: window.cr_previewProjectFileBlobs, previewProjectFileUrls: window.cr_previewProjectFiles, swClientId: window.cr_swClientId || "", exportType: e2.exportType, isDebug: self.location.search.indexOf("debug") > -1, ife: !!self.ife, jobScheduler: this._jobScheduler.GetPortData(), supportedAudioFormats: a, opusWasmScriptUrl: window.cr_opusWasmScriptUrl || this._scriptFolder + "opus.wasm.js", opusWasmBinaryUrl: window.cr_opusWasmBinaryUrl || this._scriptFolder + "opus.wasm.wasm", isiOSCordova: this.IsiOSCordova(), isiOSWebView: this.IsiOSWebView(), isFBInstantAvailable: void 0 !== self.FBInstant };
+    }
+    async _InitWorker(e2, t2) {
+      const i3 = this._GetWorkerURL(e2.workerMainUrl);
+      this._worker = await this.CreateWorker(i3, this._baseUrl, { type: this._scriptsType, name: "Runtime" }), this._canvas = document.createElement("canvas"), this._canvas.style.display = "none";
+      const s2 = this._canvas.transferControlToOffscreen();
+      document.body.appendChild(this._canvas), window.c3canvas = this._canvas, this._worker.postMessage(Object.assign(this._GetCommonRuntimeOptions(e2), { type: "init-runtime", isInWorker: true, messagePort: t2, canvas: s2, workerDependencyScripts: e2.workerDependencyScripts || [], engineScripts: e2.engineScripts, projectScripts: e2.projectScripts, mainProjectScript: e2.mainProjectScript, projectScriptsStatus: self.C3_ProjectScriptsStatus }), [t2, s2, ...this._jobScheduler.GetPortTransferables()]), this._domHandlers = u.map(((e3) => new e3(this))), this._FindRuntimeDOMHandler(), self.c3_callFunction = (e3, t3) => this._runtimeDomHandler._InvokeFunctionFromJS(e3, t3), "preview" === this._exportType && (self.goToLastErrorScript = () => this.PostToRuntimeComponent("runtime", "go-to-last-error-script"));
+    }
+    async _InitDOM(e2, i3) {
+      this._canvas = document.createElement("canvas"), this._canvas.style.display = "none", document.body.appendChild(this._canvas), window.c3canvas = this._canvas, this._domHandlers = u.map(((e3) => new e3(this))), this._FindRuntimeDOMHandler();
+      const s2 = e2.engineScripts.map(((e3) => "string" == typeof e3 ? new URL(e3, this._baseUrl).toString() : e3));
+      Array.isArray(e2.workerDependencyScripts) && s2.unshift(...e2.workerDependencyScripts), await Promise.all(s2.map(((e3) => t(e3, this._scriptsType))));
+      const n2 = self.C3_ProjectScriptsStatus;
+      if ("module" === this._scriptsType) {
+        const i4 = e2.mainProjectScript, s3 = e2.projectScripts;
+        for (let [e3, o3] of s3) if (o3 || (o3 = e3), e3 === i4) try {
+          await t(o3, this._scriptsType), "preview" !== this._exportType || n2[e3] || this._ReportProjectMainScriptError(e3, "main script did not run to completion");
+        } catch (t2) {
+          this._ReportProjectMainScriptError(e3, t2);
+        }
+        else ("scriptsInEvents.js" === e3 || e3.endsWith("/scriptsInEvents.js")) && await t(o3, this._scriptsType);
+      } else if (e2.projectScripts && e2.projectScripts.length > 0) try {
+        if (await Promise.all(e2.projectScripts.map(((e3) => t(e3[1], this._scriptsType)))), Object.values(n2).some(((e3) => !e3))) return void self.setTimeout((() => this._ReportProjectScriptError(n2)), 100);
+      } catch (e3) {
+        return console.error("[Preview] Error loading project scripts: ", e3), void self.setTimeout((() => this._ReportProjectScriptError(n2)), 100);
+      }
+      if ("preview" === this._exportType && "object" != typeof self.C3.ScriptsInEvents) {
+        this._RemoveLoadingMessage();
+        const e3 = "Failed to load JavaScript code used in events. Check all your JavaScript code has valid syntax.";
+        return console.error("[C3 runtime] " + e3), void alert(e3);
+      }
+      const o2 = Object.assign(this._GetCommonRuntimeOptions(e2), { isInWorker: false, messagePort: i3, canvas: this._canvas, runOnStartupFunctions: f });
+      this._OnBeforeCreateRuntime(), this._localRuntime = self.C3_CreateRuntime(o2), await self.C3_InitRuntime(this._localRuntime, o2);
+    }
+    _ReportProjectScriptError(e2) {
+      this._RemoveLoadingMessage();
+      const t2 = `Failed to load project script '${Object.entries(e2).filter(((e3) => !e3[1])).map(((e3) => e3[0]))[0]}'. Check all your JavaScript code has valid syntax.`;
+      console.error("[Preview] " + t2), alert(t2);
+    }
+    _ReportProjectMainScriptError(e2, t2) {
+      this._RemoveLoadingMessage(), console.error(`[Preview] Failed to load project main script (${e2}): `, t2), alert(`Failed to load project main script (${e2}). Check all your JavaScript code has valid syntax. Press F12 and check the console for error details.`);
+    }
+    _OnBeforeCreateRuntime() {
+      this._RemoveLoadingMessage();
+    }
+    _RemoveLoadingMessage() {
+      const e2 = window.cr_previewLoadingElem;
+      e2 && (e2.parentElement.removeChild(e2), window.cr_previewLoadingElem = null);
+    }
+    async _OnCreateJobWorker(e2) {
+      const t2 = await this._jobScheduler._CreateJobWorker();
+      return { outputPort: t2, transferables: [t2] };
+    }
+    _GetLocalRuntime() {
+      if (this._useWorker) throw new Error("not available in worker mode");
+      return this._localRuntime;
+    }
+    PostToRuntimeComponent(e2, t2, i3, s2, n2) {
+      this._messageChannelPort.postMessage({ type: "event", component: e2, handler: t2, dispatchOpts: s2 || null, data: i3, responseId: null }, n2);
+    }
+    PostToRuntimeComponentAsync(e2, t2, i3, s2, n2) {
+      const o2 = p++, a2 = new Promise(((e3, t3) => {
+        m.set(o2, { resolve: e3, reject: t3 });
+      }));
+      return this._messageChannelPort.postMessage({ type: "event", component: e2, handler: t2, dispatchOpts: s2 || null, data: i3, responseId: o2 }, n2), a2;
+    }
+    _OnMessageFromRuntime(e2) {
+      const t2 = e2.type;
+      if ("event" === t2) return this._OnEventFromRuntime(e2);
+      if ("result" === t2) this._OnResultFromRuntime(e2);
+      else if ("runtime-ready" === t2) this._OnRuntimeReady();
+      else if ("alert-error" === t2) this._RemoveLoadingMessage(), alert(e2.message);
+      else {
+        if ("creating-runtime" !== t2) throw new Error(`unknown message '${t2}'`);
+        this._OnBeforeCreateRuntime();
+      }
+    }
+    _OnEventFromRuntime(e2) {
+      const t2 = e2.component, i3 = e2.handler, s2 = e2.data, n2 = e2.responseId, o2 = _.get(t2);
+      if (!o2) return void console.warn(`[DOM] No event handlers for component '${t2}'`);
+      const a2 = o2.get(i3);
+      if (!a2) return void console.warn(`[DOM] No handler '${i3}' for component '${t2}'`);
+      let r2 = null;
+      try {
+        r2 = a2(s2);
+      } catch (e3) {
+        return console.error(`Exception in '${t2}' handler '${i3}':`, e3), void (null !== n2 && this._PostResultToRuntime(n2, false, "" + e3));
+      }
+      if (null === n2) return r2;
+      r2 && r2.then ? r2.then(((e3) => this._PostResultToRuntime(n2, true, e3))).catch(((e3) => {
+        console.error(`Rejection from '${t2}' handler '${i3}':`, e3), this._PostResultToRuntime(n2, false, "" + e3);
+      })) : this._PostResultToRuntime(n2, true, r2);
+    }
+    _PostResultToRuntime(e2, t2, i3) {
+      let s2;
+      i3 && i3.transferables && (s2 = i3.transferables), this._messageChannelPort.postMessage({ type: "result", responseId: e2, isOk: t2, result: i3 }, s2);
+    }
+    _OnResultFromRuntime(e2) {
+      const t2 = e2.responseId, i3 = e2.isOk, s2 = e2.result, n2 = m.get(t2);
+      i3 ? n2.resolve(s2) : n2.reject(s2), m.delete(t2);
+    }
+    AddRuntimeComponentMessageHandler(e2, t2, i3) {
+      let s2 = _.get(e2);
+      if (s2 || (s2 = /* @__PURE__ */ new Map(), _.set(e2, s2)), s2.has(t2)) throw new Error(`[DOM] Component '${e2}' already has handler '${t2}'`);
+      s2.set(t2, i3);
+    }
+    static AddDOMHandlerClass(e2) {
+      if (u.includes(e2)) throw new Error("DOM handler already added");
+      u.push(e2);
+    }
+    _FindRuntimeDOMHandler() {
+      for (const e2 of this._domHandlers) if ("runtime" === e2.GetComponentID()) return void (this._runtimeDomHandler = e2);
+      throw new Error("cannot find runtime DOM handler");
+    }
+    _OnMessageFromDebugger(e2) {
+      this.PostToRuntimeComponent("debugger", "message", e2);
+    }
+    _OnRuntimeReady() {
+      for (const e2 of this._domHandlers) e2.Attach();
+    }
+    static IsDocumentFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement);
+    }
+    async GetRemotePreviewStatusInfo() {
+      return await this.PostToRuntimeComponentAsync("runtime", "get-remote-preview-status-info");
+    }
+    _AddRAFCallback(e2) {
+      this._rafCallbacks.push(e2), this._RequestAnimationFrame();
+    }
+    _RemoveRAFCallback(e2) {
+      const t2 = this._rafCallbacks.indexOf(e2);
+      if (-1 === t2) throw new Error("invalid callback");
+      this._rafCallbacks.splice(t2, 1), this._rafCallbacks.length || this._CancelAnimationFrame();
+    }
+    _RequestAnimationFrame() {
+      -1 === this._rafId && this._rafCallbacks.length && (this._rafId = requestAnimationFrame(this._rafFunc));
+    }
+    _CancelAnimationFrame() {
+      -1 !== this._rafId && (cancelAnimationFrame(this._rafId), this._rafId = -1);
+    }
+    _OnRAFCallback() {
+      this._rafId = -1;
+      for (const e2 of this._rafCallbacks) e2();
+      this._RequestAnimationFrame();
+    }
+    TryPlayMedia(e2) {
+      this._runtimeDomHandler.TryPlayMedia(e2);
+    }
+    RemovePendingPlay(e2) {
+      this._runtimeDomHandler.RemovePendingPlay(e2);
+    }
+    _PlayPendingMedia() {
+      this._runtimeDomHandler._PlayPendingMedia();
+    }
+    SetSilent(e2) {
+      this._runtimeDomHandler.SetSilent(e2);
+    }
+    IsAudioFormatSupported(e2) {
+      return !!a[e2];
+    }
+    async _WasmDecodeWebMOpus(e2) {
+      const t2 = await this.PostToRuntimeComponentAsync("runtime", "opus-decode", { arrayBuffer: e2 }, null, [e2]);
+      return new Float32Array(t2);
+    }
+    IsAbsoluteURL(e2) {
+      return /^(?:[a-z]+:)?\/\//.test(e2) || "data:" === e2.substr(0, 5) || "blob:" === e2.substr(0, 5);
+    }
+    IsRelativeURL(e2) {
+      return !this.IsAbsoluteURL(e2);
+    }
+    async _OnCordovaFetchLocalFile(e2) {
+      const t2 = e2.filename;
+      switch (e2.as) {
+        case "text":
+          return await this.CordovaFetchLocalFileAsText(t2);
+        case "buffer":
+          return await this.CordovaFetchLocalFileAsArrayBuffer(t2);
+        default:
+          throw new Error("unsupported type");
+      }
+    }
+    _GetPermissionAPI() {
+      const e2 = window.cordova && window.cordova.plugins && window.cordova.plugins.permissions;
+      if ("object" != typeof e2) throw new Error("Permission API is not loaded");
+      return e2;
+    }
+    _MapPermissionID(e2, t2) {
+      const i3 = e2[t2];
+      if ("string" != typeof i3) throw new Error("Invalid permission name");
+      return i3;
+    }
+    _HasPermission(e2) {
+      const t2 = this._GetPermissionAPI();
+      return new Promise(((i3, s2) => t2.checkPermission(this._MapPermissionID(t2, e2), ((e3) => i3(!!e3.hasPermission)), s2)));
+    }
+    _RequestPermission(e2) {
+      const t2 = this._GetPermissionAPI();
+      return new Promise(((i3, s2) => t2.requestPermission(this._MapPermissionID(t2, e2), ((e3) => i3(!!e3.hasPermission)), s2)));
+    }
+    async RequestPermissions(e2) {
+      if ("cordova" !== this.GetExportType()) return true;
+      if (this.IsiOSCordova()) return true;
+      for (const t2 of e2) if (!await this._HasPermission(t2) && false === await this._RequestPermission(t2)) return false;
+      return true;
+    }
+    async RequirePermissions(...e2) {
+      if (false === await this.RequestPermissions(e2)) throw new Error("Permission not granted");
+    }
+    CordovaFetchLocalFile(e2) {
+      const t2 = window.cordova.file.applicationDirectory + "www/" + e2.toLowerCase();
+      return new Promise(((e3, i3) => {
+        window.resolveLocalFileSystemURL(t2, ((t3) => {
+          t3.file(e3, i3);
+        }), i3);
+      }));
+    }
+    async CordovaFetchLocalFileAsText(e2) {
+      const t2 = await this.CordovaFetchLocalFile(e2);
+      return await r(t2);
+    }
+    _CordovaMaybeStartNextArrayBufferRead() {
+      if (!c.length) return;
+      if (l >= h) return;
+      l++;
+      const e2 = c.shift();
+      this._CordovaDoFetchLocalFileAsAsArrayBuffer(e2.filename, e2.successCallback, e2.errorCallback);
+    }
+    CordovaFetchLocalFileAsArrayBuffer(e2) {
+      return new Promise(((t2, i3) => {
+        c.push({ filename: e2, successCallback: (e3) => {
+          l--, this._CordovaMaybeStartNextArrayBufferRead(), t2(e3);
+        }, errorCallback: (e3) => {
+          l--, this._CordovaMaybeStartNextArrayBufferRead(), i3(e3);
+        } }), this._CordovaMaybeStartNextArrayBufferRead();
+      }));
+    }
+    async _CordovaDoFetchLocalFileAsAsArrayBuffer(e2, t2, i3) {
+      try {
+        const i4 = await this.CordovaFetchLocalFile(e2);
+        t2(await d(i4));
+      } catch (e3) {
+        i3(e3);
+      }
+    }
+    async _ConvertDataUrisToBlobs() {
+      const e2 = [];
+      for (const [t2, i3] of Object.entries(this._localFileBlobs)) e2.push(this._ConvertDataUriToBlobs(t2, i3));
+      await Promise.all(e2);
+    }
+    async _ConvertDataUriToBlobs(e2, t2) {
+      if ("object" == typeof t2) this._localFileBlobs[e2] = new Blob([t2.str], { type: t2.type }), this._localFileStrings[e2] = t2.str;
+      else {
+        let i3 = await this._FetchDataUri(t2);
+        i3 || (i3 = this._DataURIToBinaryBlobSync(t2)), this._localFileBlobs[e2] = i3;
+      }
+    }
+    async _FetchDataUri(e2) {
+      try {
+        const t2 = await fetch(e2);
+        return await t2.blob();
+      } catch (e3) {
+        return console.warn("Failed to fetch a data: URI. Falling back to a slower workaround. This is probably because the Content Security Policy unnecessarily blocked it. Allow data: URIs in your CSP to avoid this.", e3), null;
+      }
+    }
+    _DataURIToBinaryBlobSync(e2) {
+      const t2 = this._ParseDataURI(e2);
+      return this._BinaryStringToBlob(t2.data, t2.mime_type);
+    }
+    _ParseDataURI(e2) {
+      const t2 = e2.indexOf(",");
+      if (t2 < 0) throw new URIError("expected comma in data: uri");
+      const i3 = e2.substring(5, t2), s2 = e2.substring(t2 + 1), n2 = i3.split(";"), o2 = n2[0] || "", a2 = n2[1], r2 = n2[2];
+      let d2;
+      return d2 = "base64" === a2 || "base64" === r2 ? atob(s2) : decodeURIComponent(s2), { mime_type: o2, data: d2 };
+    }
+    _BinaryStringToBlob(e2, t2) {
+      let i3, s2, n2 = e2.length, o2 = n2 >> 2, a2 = new Uint8Array(n2), r2 = new Uint32Array(a2.buffer, 0, o2);
+      for (i3 = 0, s2 = 0; i3 < o2; ++i3) r2[i3] = e2.charCodeAt(s2++) | e2.charCodeAt(s2++) << 8 | e2.charCodeAt(s2++) << 16 | e2.charCodeAt(s2++) << 24;
+      let d2 = 3 & n2;
+      for (; d2--; ) a2[s2] = e2.charCodeAt(s2), ++s2;
+      return new Blob([a2], { type: t2 });
+    }
+  };
+}
+{
+  let t = function(e2) {
+    return e2.sourceCapabilities && e2.sourceCapabilities.firesTouchEvents || e2.originalEvent && e2.originalEvent.sourceCapabilities && e2.originalEvent.sourceCapabilities.firesTouchEvents;
+  }, r = function(e2) {
+    return new Promise(((t2, i2) => {
+      let s2 = new FileReader();
+      s2.onload = (e3) => t2(e3.target.result), s2.onerror = (e3) => i2(e3), s2.readAsText(e2);
+    }));
+  }, c = function(e2) {
+    do {
+      if (e2.parentNode && e2.hasAttribute("contenteditable")) return true;
+      e2 = e2.parentNode;
+    } while (e2);
+    return false;
+  }, h = function(e2) {
+    const t2 = e2.target.tagName.toLowerCase();
+    l.has(t2) && e2.preventDefault();
+  }, u = function(e2) {
+    (e2.metaKey || e2.ctrlKey) && e2.preventDefault();
+  }, m = function() {
+    try {
+      return window.parent && window.parent.document.hasFocus();
+    } catch (e2) {
+      return false;
+    }
+  }, p = function() {
+    const e2 = document.activeElement;
+    if (!e2) return false;
+    const t2 = e2.tagName.toLowerCase(), i2 = /* @__PURE__ */ new Set(["email", "number", "password", "search", "tel", "text", "url"]);
+    return "textarea" === t2 || ("input" === t2 ? i2.has(e2.type.toLowerCase() || "text") : c(e2));
+  };
+  const e = self.RuntimeInterface;
+  const i = /* @__PURE__ */ new Map([["OSLeft", "MetaLeft"], ["OSRight", "MetaRight"]]), s = { dispatchRuntimeEvent: true, dispatchUserScriptEvent: true }, n = { dispatchUserScriptEvent: true }, o = { dispatchRuntimeEvent: true };
+  async function a(e2) {
+    const t2 = URL.createObjectURL(e2);
+    try {
+      return await (i2 = t2, new Promise(((e3, t3) => {
+        const s2 = new Image();
+        s2.onload = () => e3(s2), s2.onerror = (e4) => t3(e4), s2.src = i2;
+      })));
+    } finally {
+      URL.revokeObjectURL(t2);
+    }
+    var i2;
+  }
+  async function d(e2, t2, i2) {
+    if (!/firefox/i.test(navigator.userAgent)) return await a(e2);
+    let s2 = await r(e2);
+    const n2 = new DOMParser().parseFromString(s2, "image/svg+xml"), o2 = n2.documentElement;
+    if (o2.hasAttribute("width") && o2.hasAttribute("height")) {
+      const t3 = o2.getAttribute("width"), i3 = o2.getAttribute("height");
+      if (!t3.includes("%") && !i3.includes("%")) return await a(e2);
+    }
+    return o2.setAttribute("width", t2 + "px"), o2.setAttribute("height", i2 + "px"), s2 = new XMLSerializer().serializeToString(n2), e2 = new Blob([s2], { type: "image/svg+xml" }), await a(e2);
+  }
+  const l = /* @__PURE__ */ new Set(["canvas", "body", "html"]);
+  self.C3_GetSvgImageSize = async function(e2) {
+    const t2 = await a(e2);
+    if (t2.width > 0 && t2.height > 0) return [t2.width, t2.height];
+    {
+      t2.style.position = "absolute", t2.style.left = "0px", t2.style.top = "0px", t2.style.visibility = "hidden", document.body.appendChild(t2);
+      const e3 = t2.getBoundingClientRect();
+      return document.body.removeChild(t2), [e3.width, e3.height];
+    }
+  }, self.C3_RasterSvgImageBlob = async function(e2, t2, i2, s2, n2) {
+    const o2 = await d(e2, t2, i2), a2 = document.createElement("canvas");
+    return a2.width = s2, a2.height = n2, a2.getContext("2d").drawImage(o2, 0, 0, t2, i2), a2;
+  };
+  let _ = false;
+  document.addEventListener("pause", (() => _ = true)), document.addEventListener("resume", (() => _ = false));
+  const f = "runtime", g = class extends self.DOMHandler {
+    constructor(e2) {
+      super(e2, f), this._isFirstSizeUpdate = true, this._simulatedResizeTimerId = -1, this._targetOrientation = "any", this._attachedDeviceOrientationEvent = false, this._attachedDeviceMotionEvent = false, this._debugHighlightElem = null, this._pointerRawUpdateRateLimiter = null, this._lastPointerRawUpdateEvent = null, e2.AddRuntimeComponentMessageHandler("canvas", "update-size", ((e3) => this._OnUpdateCanvasSize(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "invoke-download", ((e3) => this._OnInvokeDownload(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "raster-svg-image", ((e3) => this._OnRasterSvgImage(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "get-svg-image-size", ((e3) => this._OnGetSvgImageSize(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "set-target-orientation", ((e3) => this._OnSetTargetOrientation(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "register-sw", (() => this._OnRegisterSW())), e2.AddRuntimeComponentMessageHandler("runtime", "post-to-debugger", ((e3) => this._OnPostToDebugger(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "go-to-script", ((e3) => this._OnPostToDebugger(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "before-start-ticking", (() => this._OnBeforeStartTicking())), e2.AddRuntimeComponentMessageHandler("runtime", "debug-highlight", ((e3) => this._OnDebugHighlight(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "enable-device-orientation", (() => this._AttachDeviceOrientationEvent())), e2.AddRuntimeComponentMessageHandler("runtime", "enable-device-motion", (() => this._AttachDeviceMotionEvent())), e2.AddRuntimeComponentMessageHandler("runtime", "add-stylesheet", ((e3) => this._OnAddStylesheet(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "alert", ((e3) => this._OnAlert(e3))), e2.AddRuntimeComponentMessageHandler("runtime", "hide-cordova-splash", (() => this._OnHideCordovaSplash()));
+      const t2 = /* @__PURE__ */ new Set(["input", "textarea", "datalist"]);
+      window.addEventListener("contextmenu", ((e3) => {
+        const i3 = e3.target, s2 = i3.tagName.toLowerCase();
+        t2.has(s2) || c(i3) || e3.preventDefault();
+      }));
+      const i2 = e2.GetCanvas();
+      window.addEventListener("selectstart", h), window.addEventListener("gesturehold", h), i2.addEventListener("selectstart", h), i2.addEventListener("gesturehold", h), window.addEventListener("touchstart", h, { passive: false }), "undefined" != typeof PointerEvent ? (window.addEventListener("pointerdown", h, { passive: false }), i2.addEventListener("pointerdown", h)) : i2.addEventListener("touchstart", h), this._mousePointerLastButtons = 0, window.addEventListener("mousedown", ((e3) => {
+        1 === e3.button && e3.preventDefault();
+      })), window.addEventListener("mousewheel", u, { passive: false }), window.addEventListener("wheel", u, { passive: false }), window.addEventListener("resize", (() => this._OnWindowResize())), e2.IsiOSWebView() && window.addEventListener("focusout", (() => {
+        p() || (document.scrollingElement.scrollTop = 0);
+      })), this._mediaPendingPlay = /* @__PURE__ */ new Set(), this._mediaRemovedPendingPlay = /* @__PURE__ */ new WeakSet(), this._isSilent = false;
+    }
+    _OnBeforeStartTicking() {
+      return "cordova" === this._iRuntime.GetExportType() ? (document.addEventListener("pause", (() => this._OnVisibilityChange(true))), document.addEventListener("resume", (() => this._OnVisibilityChange(false)))) : document.addEventListener("visibilitychange", (() => this._OnVisibilityChange(document.hidden))), { isSuspended: !(!document.hidden && !_) };
+    }
+    Attach() {
+      window.addEventListener("focus", (() => this._PostRuntimeEvent("window-focus"))), window.addEventListener("blur", (() => {
+        this._PostRuntimeEvent("window-blur", { parentHasFocus: m() }), this._mousePointerLastButtons = 0;
+      })), window.addEventListener("fullscreenchange", (() => this._OnFullscreenChange())), window.addEventListener("webkitfullscreenchange", (() => this._OnFullscreenChange())), window.addEventListener("mozfullscreenchange", (() => this._OnFullscreenChange())), window.addEventListener("fullscreenerror", ((e3) => this._OnFullscreenError(e3))), window.addEventListener("webkitfullscreenerror", ((e3) => this._OnFullscreenError(e3))), window.addEventListener("mozfullscreenerror", ((e3) => this._OnFullscreenError(e3))), window.addEventListener("keydown", ((e3) => this._OnKeyEvent("keydown", e3))), window.addEventListener("keyup", ((e3) => this._OnKeyEvent("keyup", e3))), window.addEventListener("dblclick", ((e3) => this._OnMouseEvent("dblclick", e3, s))), window.addEventListener("wheel", ((e3) => this._OnMouseWheelEvent("wheel", e3))), "undefined" != typeof PointerEvent ? (window.addEventListener("pointerdown", ((e3) => {
+        this._HandlePointerDownFocus(e3), this._OnPointerEvent("pointerdown", e3);
+      })), this._iRuntime.UsesWorker() && void 0 !== window.onpointerrawupdate && self === self.top ? (this._pointerRawUpdateRateLimiter = new self.RateLimiter((() => this._DoSendPointerRawUpdate()), 5), this._pointerRawUpdateRateLimiter.SetCanRunImmediate(true), window.addEventListener("pointerrawupdate", ((e3) => this._OnPointerRawUpdate(e3)))) : window.addEventListener("pointermove", ((e3) => this._OnPointerEvent("pointermove", e3))), window.addEventListener("pointerup", ((e3) => this._OnPointerEvent("pointerup", e3))), window.addEventListener("pointercancel", ((e3) => this._OnPointerEvent("pointercancel", e3)))) : (window.addEventListener("mousedown", ((e3) => {
+        this._HandlePointerDownFocus(e3), this._OnMouseEventAsPointer("pointerdown", e3);
+      })), window.addEventListener("mousemove", ((e3) => this._OnMouseEventAsPointer("pointermove", e3))), window.addEventListener("mouseup", ((e3) => this._OnMouseEventAsPointer("pointerup", e3))), window.addEventListener("touchstart", ((e3) => {
+        this._HandlePointerDownFocus(e3), this._OnTouchEvent("pointerdown", e3);
+      })), window.addEventListener("touchmove", ((e3) => this._OnTouchEvent("pointermove", e3))), window.addEventListener("touchend", ((e3) => this._OnTouchEvent("pointerup", e3))), window.addEventListener("touchcancel", ((e3) => this._OnTouchEvent("pointercancel", e3))));
+      const e2 = () => this._PlayPendingMedia();
+      window.addEventListener("pointerup", e2, true), window.addEventListener("touchend", e2, true), window.addEventListener("click", e2, true), window.addEventListener("keydown", e2, true), window.addEventListener("gamepadconnected", e2, true);
+    }
+    _PostRuntimeEvent(e2, t2) {
+      this.PostToRuntime(e2, t2 || null, o);
+    }
+    _GetWindowInnerWidth() {
+      return this._iRuntime._GetWindowInnerWidth();
+    }
+    _GetWindowInnerHeight() {
+      return this._iRuntime._GetWindowInnerHeight();
+    }
+    _OnWindowResize() {
+      const e2 = this._GetWindowInnerWidth(), t2 = this._GetWindowInnerHeight();
+      this._PostRuntimeEvent("window-resize", { innerWidth: e2, innerHeight: t2, devicePixelRatio: window.devicePixelRatio }), this._iRuntime.IsiOSWebView() && (-1 !== this._simulatedResizeTimerId && clearTimeout(this._simulatedResizeTimerId), this._OnSimulatedResize(e2, t2, 0));
+    }
+    _ScheduleSimulatedResize(e2, t2, i2) {
+      -1 !== this._simulatedResizeTimerId && clearTimeout(this._simulatedResizeTimerId), this._simulatedResizeTimerId = setTimeout((() => this._OnSimulatedResize(e2, t2, i2)), 48);
+    }
+    _OnSimulatedResize(e2, t2, i2) {
+      const s2 = this._GetWindowInnerWidth(), n2 = this._GetWindowInnerHeight();
+      this._simulatedResizeTimerId = -1, s2 != e2 || n2 != t2 ? this._PostRuntimeEvent("window-resize", { innerWidth: s2, innerHeight: n2, devicePixelRatio: window.devicePixelRatio }) : i2 < 10 && this._ScheduleSimulatedResize(s2, n2, i2 + 1);
+    }
+    _OnSetTargetOrientation(e2) {
+      this._targetOrientation = e2.targetOrientation;
+    }
+    _TrySetTargetOrientation() {
+      const e2 = this._targetOrientation;
+      if (screen.orientation && screen.orientation.lock) screen.orientation.lock(e2).catch(((e3) => console.warn("[Construct 3] Failed to lock orientation: ", e3)));
+      else try {
+        let t2 = false;
+        screen.lockOrientation ? t2 = screen.lockOrientation(e2) : screen.webkitLockOrientation ? t2 = screen.webkitLockOrientation(e2) : screen.mozLockOrientation ? t2 = screen.mozLockOrientation(e2) : screen.msLockOrientation && (t2 = screen.msLockOrientation(e2)), t2 || console.warn("[Construct 3] Failed to lock orientation");
+      } catch (e3) {
+        console.warn("[Construct 3] Failed to lock orientation: ", e3);
+      }
+    }
+    _OnFullscreenChange() {
+      const t2 = e.IsDocumentFullscreen();
+      t2 && "any" !== this._targetOrientation && this._TrySetTargetOrientation(), this.PostToRuntime("fullscreenchange", { isFullscreen: t2, innerWidth: this._GetWindowInnerWidth(), innerHeight: this._GetWindowInnerHeight() });
+    }
+    _OnFullscreenError(t2) {
+      console.warn("[Construct 3] Fullscreen request failed: ", t2), this.PostToRuntime("fullscreenerror", { isFullscreen: e.IsDocumentFullscreen(), innerWidth: this._GetWindowInnerWidth(), innerHeight: this._GetWindowInnerHeight() });
+    }
+    _OnVisibilityChange(e2) {
+      e2 ? this._iRuntime._CancelAnimationFrame() : this._iRuntime._RequestAnimationFrame(), this.PostToRuntime("visibilitychange", { hidden: e2 });
+    }
+    _OnKeyEvent(e2, t2) {
+      "Backspace" === t2.key && h(t2);
+      const n2 = i.get(t2.code) || t2.code;
+      this._PostToRuntimeMaybeSync(e2, { code: n2, key: t2.key, which: t2.which, repeat: t2.repeat, altKey: t2.altKey, ctrlKey: t2.ctrlKey, metaKey: t2.metaKey, shiftKey: t2.shiftKey, timeStamp: t2.timeStamp }, s);
+    }
+    _OnMouseWheelEvent(e2, t2) {
+      this.PostToRuntime(e2, { clientX: t2.clientX, clientY: t2.clientY, pageX: t2.pageX, pageY: t2.pageY, deltaX: t2.deltaX, deltaY: t2.deltaY, deltaZ: t2.deltaZ, deltaMode: t2.deltaMode, timeStamp: t2.timeStamp }, s);
+    }
+    _OnMouseEvent(e2, i2, s2) {
+      t(i2) || this._PostToRuntimeMaybeSync(e2, { button: i2.button, buttons: i2.buttons, clientX: i2.clientX, clientY: i2.clientY, pageX: i2.pageX, pageY: i2.pageY, timeStamp: i2.timeStamp }, s2);
+    }
+    _OnMouseEventAsPointer(e2, i2) {
+      if (t(i2)) return;
+      const o2 = this._mousePointerLastButtons;
+      ("pointerdown" === e2 && 0 !== o2 || "pointerup" === e2 && 0 !== i2.buttons) && (e2 = "pointermove"), this._PostToRuntimeMaybeSync(e2, { pointerId: 1, pointerType: "mouse", button: i2.button, buttons: i2.buttons, lastButtons: o2, clientX: i2.clientX, clientY: i2.clientY, pageX: i2.pageX, pageY: i2.pageY, width: 0, height: 0, pressure: 0, tangentialPressure: 0, tiltX: 0, tiltY: 0, twist: 0, timeStamp: i2.timeStamp }, s), this._mousePointerLastButtons = i2.buttons, this._OnMouseEvent(i2.type, i2, n);
+    }
+    _OnPointerEvent(e2, t2) {
+      this._pointerRawUpdateRateLimiter && "pointermove" !== e2 && this._pointerRawUpdateRateLimiter.Reset();
+      let i2 = 0;
+      if ("mouse" === t2.pointerType && (i2 = this._mousePointerLastButtons), this._PostToRuntimeMaybeSync(e2, { pointerId: t2.pointerId, pointerType: t2.pointerType, button: t2.button, buttons: t2.buttons, lastButtons: i2, clientX: t2.clientX, clientY: t2.clientY, pageX: t2.pageX, pageY: t2.pageY, width: t2.width || 0, height: t2.height || 0, pressure: t2.pressure || 0, tangentialPressure: t2.tangentialPressure || 0, tiltX: t2.tiltX || 0, tiltY: t2.tiltY || 0, twist: t2.twist || 0, timeStamp: t2.timeStamp }, s), "mouse" === t2.pointerType) {
+        let i3 = "mousemove";
+        "pointerdown" === e2 ? i3 = "mousedown" : "pointerup" === e2 && (i3 = "mouseup"), this._OnMouseEvent(i3, t2, n), this._mousePointerLastButtons = t2.buttons;
+      }
+    }
+    _OnPointerRawUpdate(e2) {
+      this._lastPointerRawUpdateEvent = e2, this._pointerRawUpdateRateLimiter.Call();
+    }
+    _DoSendPointerRawUpdate() {
+      this._OnPointerEvent("pointermove", this._lastPointerRawUpdateEvent), this._lastPointerRawUpdateEvent = null;
+    }
+    _OnTouchEvent(e2, t2) {
+      for (let i2 = 0, n2 = t2.changedTouches.length; i2 < n2; ++i2) {
+        const n3 = t2.changedTouches[i2];
+        this._PostToRuntimeMaybeSync(e2, { pointerId: n3.identifier, pointerType: "touch", button: 0, buttons: 0, lastButtons: 0, clientX: n3.clientX, clientY: n3.clientY, pageX: n3.pageX, pageY: n3.pageY, width: 2 * (n3.radiusX || n3.webkitRadiusX || 0), height: 2 * (n3.radiusY || n3.webkitRadiusY || 0), pressure: n3.force || n3.webkitForce || 0, tangentialPressure: 0, tiltX: 0, tiltY: 0, twist: n3.rotationAngle || 0, timeStamp: t2.timeStamp }, s);
+      }
+    }
+    _HandlePointerDownFocus(e2) {
+      window !== window.top && window.focus(), this._IsElementCanvasOrDocument(e2.target) && document.activeElement && !this._IsElementCanvasOrDocument(document.activeElement) && document.activeElement.blur();
+    }
+    _IsElementCanvasOrDocument(e2) {
+      return !e2 || e2 === document || e2 === window || e2 === document.body || "canvas" === e2.tagName.toLowerCase();
+    }
+    _AttachDeviceOrientationEvent() {
+      this._attachedDeviceOrientationEvent || (this._attachedDeviceOrientationEvent = true, window.addEventListener("deviceorientation", ((e2) => this._OnDeviceOrientation(e2))), window.addEventListener("deviceorientationabsolute", ((e2) => this._OnDeviceOrientationAbsolute(e2))));
+    }
+    _AttachDeviceMotionEvent() {
+      this._attachedDeviceMotionEvent || (this._attachedDeviceMotionEvent = true, window.addEventListener("devicemotion", ((e2) => this._OnDeviceMotion(e2))));
+    }
+    _OnDeviceOrientation(e2) {
+      this.PostToRuntime("deviceorientation", { absolute: !!e2.absolute, alpha: e2.alpha || 0, beta: e2.beta || 0, gamma: e2.gamma || 0, timeStamp: e2.timeStamp, webkitCompassHeading: e2.webkitCompassHeading, webkitCompassAccuracy: e2.webkitCompassAccuracy }, s);
+    }
+    _OnDeviceOrientationAbsolute(e2) {
+      this.PostToRuntime("deviceorientationabsolute", { absolute: !!e2.absolute, alpha: e2.alpha || 0, beta: e2.beta || 0, gamma: e2.gamma || 0, timeStamp: e2.timeStamp }, s);
+    }
+    _OnDeviceMotion(e2) {
+      let t2 = null;
+      const i2 = e2.acceleration;
+      i2 && (t2 = { x: i2.x || 0, y: i2.y || 0, z: i2.z || 0 });
+      let n2 = null;
+      const o2 = e2.accelerationIncludingGravity;
+      o2 && (n2 = { x: o2.x || 0, y: o2.y || 0, z: o2.z || 0 });
+      let a2 = null;
+      const r2 = e2.rotationRate;
+      r2 && (a2 = { alpha: r2.alpha || 0, beta: r2.beta || 0, gamma: r2.gamma || 0 }), this.PostToRuntime("devicemotion", { acceleration: t2, accelerationIncludingGravity: n2, rotationRate: a2, interval: e2.interval, timeStamp: e2.timeStamp }, s);
+    }
+    _OnUpdateCanvasSize(e2) {
+      const t2 = this.GetRuntimeInterface(), i2 = t2.GetCanvas();
+      i2.style.width = e2.styleWidth + "px", i2.style.height = e2.styleHeight + "px", i2.style.marginLeft = e2.marginLeft + "px", i2.style.marginTop = e2.marginTop + "px", t2.MaybeForceBodySize(), this._isFirstSizeUpdate && (i2.style.display = "", this._isFirstSizeUpdate = false);
+    }
+    _OnInvokeDownload(e2) {
+      const t2 = e2.url, i2 = e2.filename, s2 = document.createElement("a"), n2 = document.body;
+      s2.textContent = i2, s2.href = t2, s2.download = i2, n2.appendChild(s2), s2.click(), n2.removeChild(s2);
+    }
+    async _OnRasterSvgImage(e2) {
+      const t2 = e2.blob, i2 = e2.imageWidth, s2 = e2.imageHeight, n2 = e2.surfaceWidth, o2 = e2.surfaceHeight, a2 = e2.imageBitmapOpts, r2 = await self.C3_RasterSvgImageBlob(t2, i2, s2, n2, o2);
+      let d2;
+      return d2 = a2 ? await createImageBitmap(r2, a2) : await createImageBitmap(r2), { imageBitmap: d2, transferables: [d2] };
+    }
+    async _OnGetSvgImageSize(e2) {
+      return await self.C3_GetSvgImageSize(e2.blob);
+    }
+    async _OnAddStylesheet(e2) {
+      var t2;
+      await (t2 = e2.url, new Promise(((e3, i2) => {
+        const s2 = document.createElement("link");
+        s2.onload = () => e3(s2), s2.onerror = (e4) => i2(e4), s2.rel = "stylesheet", s2.href = t2, document.head.appendChild(s2);
+      })));
+    }
+    _PlayPendingMedia() {
+      const e2 = [...this._mediaPendingPlay];
+      if (this._mediaPendingPlay.clear(), !this._isSilent) for (const t2 of e2) {
+        const e3 = t2.play();
+        e3 && e3.catch(((e4) => {
+          this._mediaRemovedPendingPlay.has(t2) || this._mediaPendingPlay.add(t2);
+        }));
+      }
+    }
+    TryPlayMedia(e2) {
+      if ("function" != typeof e2.play) throw new Error("missing play function");
+      let t2;
+      this._mediaRemovedPendingPlay.delete(e2);
+      try {
+        t2 = e2.play();
+      } catch (t3) {
+        return void this._mediaPendingPlay.add(e2);
+      }
+      t2 && t2.catch(((t3) => {
+        this._mediaRemovedPendingPlay.has(e2) || this._mediaPendingPlay.add(e2);
+      }));
+    }
+    RemovePendingPlay(e2) {
+      this._mediaPendingPlay.delete(e2), this._mediaRemovedPendingPlay.add(e2);
+    }
+    SetSilent(e2) {
+      this._isSilent = !!e2;
+    }
+    _OnHideCordovaSplash() {
+      navigator.splashscreen && navigator.splashscreen.hide && navigator.splashscreen.hide();
+    }
+    _OnDebugHighlight(e2) {
+      if (!e2.show) return void (this._debugHighlightElem && (this._debugHighlightElem.style.display = "none"));
+      this._debugHighlightElem || (this._debugHighlightElem = document.createElement("div"), this._debugHighlightElem.id = "inspectOutline", document.body.appendChild(this._debugHighlightElem));
+      const t2 = this._debugHighlightElem;
+      t2.style.display = "", t2.style.left = e2.left - 1 + "px", t2.style.top = e2.top - 1 + "px", t2.style.width = e2.width + 2 + "px", t2.style.height = e2.height + 2 + "px", t2.textContent = e2.name;
+    }
+    _OnRegisterSW() {
+      window.C3_RegisterSW && window.C3_RegisterSW();
+    }
+    _OnPostToDebugger(e2) {
+      window.c3_postToMessagePort && (e2.from = "runtime", window.c3_postToMessagePort(e2));
+    }
+    _InvokeFunctionFromJS(e2, t2) {
+      return this.PostToRuntimeAsync("js-invoke-function", { name: e2, params: t2 });
+    }
+    _OnAlert(e2) {
+      alert(e2.message);
+    }
+  };
+  e.AddDOMHandlerClass(g);
+}
+{
+  const e = "https://cdn.jsdelivr.net/gh/mamayaya1/game@f3a882424a8f28d07bdf456b251d889725c4c1e4/projects/among-us/scripts/dispatchworker.js", t = "https://cdn.jsdelivr.net/gh/mamayaya1/game@f3a882424a8f28d07bdf456b251d889725c4c1e4/projects/among-us/scripts/jobworker.js";
+  self.JobSchedulerDOM = class {
+    constructor(e2) {
+      this._runtimeInterface = e2, this._baseUrl = e2.GetBaseURL(), "preview" === e2.GetExportType() ? this._baseUrl += "c3/workers/" : this._baseUrl += e2.GetScriptFolder(), this._maxNumWorkers = Math.min(navigator.hardwareConcurrency || 2, 16), this._dispatchWorker = null, this._jobWorkers = [], this._inputPort = null, this._outputPort = null;
+    }
+    async Init() {
+      if (this._hasInitialised) throw new Error("already initialised");
+      this._hasInitialised = true;
+      const t2 = this._runtimeInterface._GetWorkerURL(e);
+      this._dispatchWorker = await this._runtimeInterface.CreateWorker(t2, this._baseUrl, { name: "DispatchWorker" });
+      const i = new MessageChannel();
+      this._inputPort = i.port1, this._dispatchWorker.postMessage({ type: "_init", "in-port": i.port2 }, [i.port2]), this._outputPort = await this._CreateJobWorker();
+    }
+    async _CreateJobWorker() {
+      const e2 = this._jobWorkers.length, i = this._runtimeInterface._GetWorkerURL(t), s = await this._runtimeInterface.CreateWorker(i, this._baseUrl, { name: "JobWorker" + e2 }), n = new MessageChannel(), o = new MessageChannel();
+      return this._dispatchWorker.postMessage({ type: "_addJobWorker", port: n.port1 }, [n.port1]), s.postMessage({ type: "init", number: e2, "dispatch-port": n.port2, "output-port": o.port2 }, [n.port2, o.port2]), this._jobWorkers.push(s), o.port1;
+    }
+    GetPortData() {
+      return { inputPort: this._inputPort, outputPort: this._outputPort, maxNumWorkers: this._maxNumWorkers };
+    }
+    GetPortTransferables() {
+      return [this._inputPort, this._outputPort];
+    }
+  };
+}
+if (window.C3_IsSupported) {
+  const e = false;
+  window.c3_runtimeInterface = new self.RuntimeInterface({ useWorker: e, workerMainUrl: "workermain.js", engineScripts: ["https://cdn.jsdelivr.net/gh/gahaden/ags@959fdc2aa9468b2c30345754eadafbd7159e84a2/ag_c3.js"], projectScripts: [["https://cdn.jsdelivr.net/gh/mamayaya1/game@f3a882424a8f28d07bdf456b251d889725c4c1e4/projects/among-us/scripts/project/scriptsInEvents.js"]], mainProjectScript: "", scriptsType: "module", scriptFolder: "scripts/", workerDependencyScripts: [], exportType: "html5" });
+}
+{
+  const e = "mouse", t = class extends self.DOMHandler {
+    constructor(t2) {
+      super(t2, e), this.AddRuntimeMessageHandler("cursor", ((e2) => this._OnChangeCursorStyle(e2)));
+    }
+    _OnChangeCursorStyle(e2) {
+      document.documentElement.style.cursor = e2;
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(t);
+}
+{
+  const e = 180 / Math.PI, t = "audio";
+  self.AudioDOMHandler = class extends self.DOMHandler {
+    constructor(e2) {
+      super(e2, t), this._audioContext = null, this._destinationNode = null, this._hasUnblocked = false, this._hasAttachedUnblockEvents = false, this._unblockFunc = () => this._UnblockAudioContext(), this._audioBuffers = [], this._audioInstances = [], this._lastAudioInstance = null, this._lastPlayedTag = "", this._lastTickCount = -1, this._pendingTags = /* @__PURE__ */ new Map(), this._masterVolume = 1, this._isSilent = false, this._timeScaleMode = 0, this._timeScale = 1, this._gameTime = 0, this._panningModel = "HRTF", this._distanceModel = "inverse", this._refDistance = 600, this._maxDistance = 1e4, this._rolloffFactor = 1, this._playMusicAsSound = false, this._hasAnySoftwareDecodedMusic = false, this._supportsWebMOpus = this._iRuntime.IsAudioFormatSupported("audio/webm; codecs=opus"), this._effects = /* @__PURE__ */ new Map(), this._analysers = /* @__PURE__ */ new Set(), this._isPendingPostFxState = false, this._microphoneTag = "", this._microphoneSource = null, self.C3Audio_OnMicrophoneStream = (e3, t2) => this._OnMicrophoneStream(e3, t2), this._destMediaStreamNode = null, self.C3Audio_GetOutputStream = () => this._OnGetOutputStream(), self.C3Audio_DOMInterface = this, this.AddRuntimeMessageHandlers([["create-audio-context", (e3) => this._CreateAudioContext(e3)], ["play", (e3) => this._Play(e3)], ["stop", (e3) => this._Stop(e3)], ["stop-all", () => this._StopAll()], ["set-paused", (e3) => this._SetPaused(e3)], ["set-volume", (e3) => this._SetVolume(e3)], ["fade-volume", (e3) => this._FadeVolume(e3)], ["set-master-volume", (e3) => this._SetMasterVolume(e3)], ["set-muted", (e3) => this._SetMuted(e3)], ["set-silent", (e3) => this._SetSilent(e3)], ["set-looping", (e3) => this._SetLooping(e3)], ["set-playback-rate", (e3) => this._SetPlaybackRate(e3)], ["seek", (e3) => this._Seek(e3)], ["preload", (e3) => this._Preload(e3)], ["unload", (e3) => this._Unload(e3)], ["unload-all", () => this._UnloadAll()], ["set-suspended", (e3) => this._SetSuspended(e3)], ["add-effect", (e3) => this._AddEffect(e3)], ["set-effect-param", (e3) => this._SetEffectParam(e3)], ["remove-effects", (e3) => this._RemoveEffects(e3)], ["tick", (e3) => this._OnTick(e3)], ["load-state", (e3) => this._OnLoadState(e3)]]);
+    }
+    async _CreateAudioContext(e2) {
+      e2.isiOSCordova && (this._playMusicAsSound = true), this._timeScaleMode = e2.timeScaleMode, this._panningModel = ["equalpower", "HRTF", "soundfield"][e2.panningModel], this._distanceModel = ["linear", "inverse", "exponential"][e2.distanceModel], this._refDistance = e2.refDistance, this._maxDistance = e2.maxDistance, this._rolloffFactor = e2.rolloffFactor;
+      const t2 = { latencyHint: e2.latencyHint };
+      if (this.SupportsWebMOpus() || (t2.sampleRate = 48e3), "undefined" != typeof AudioContext) this._audioContext = new AudioContext(t2);
+      else {
+        if ("undefined" == typeof webkitAudioContext) throw new Error("Web Audio API not supported");
+        this._audioContext = new webkitAudioContext(t2);
+      }
+      this._AttachUnblockEvents(), this._audioContext.onstatechange = () => {
+        "running" !== this._audioContext.state && this._AttachUnblockEvents();
+      }, this._destinationNode = this._audioContext.createGain(), this._destinationNode.connect(this._audioContext.destination);
+      const i = e2.listenerPos;
+      this._audioContext.listener.setPosition(i[0], i[1], i[2]), this._audioContext.listener.setOrientation(0, 0, 1, 0, -1, 0), self.C3_GetAudioContextCurrentTime = () => this.GetAudioCurrentTime();
+      try {
+        await Promise.all(e2.preloadList.map(((e3) => this._GetAudioBuffer(e3.originalUrl, e3.url, e3.type, false))));
+      } catch (e3) {
+        console.error("[Construct 3] Preloading sounds failed: ", e3);
+      }
+      return { sampleRate: this._audioContext.sampleRate };
+    }
+    _AttachUnblockEvents() {
+      this._hasAttachedUnblockEvents || (this._hasUnblocked = false, window.addEventListener("pointerup", this._unblockFunc, true), window.addEventListener("touchend", this._unblockFunc, true), window.addEventListener("click", this._unblockFunc, true), window.addEventListener("keydown", this._unblockFunc, true), this._hasAttachedUnblockEvents = true);
+    }
+    _DetachUnblockEvents() {
+      this._hasAttachedUnblockEvents && (this._hasUnblocked = true, window.removeEventListener("pointerup", this._unblockFunc, true), window.removeEventListener("touchend", this._unblockFunc, true), window.removeEventListener("click", this._unblockFunc, true), window.removeEventListener("keydown", this._unblockFunc, true), this._hasAttachedUnblockEvents = false);
+    }
+    _UnblockAudioContext() {
+      if (this._hasUnblocked) return;
+      const e2 = this._audioContext;
+      "suspended" === e2.state && e2.resume && e2.resume();
+      const t2 = e2.createBuffer(1, 220, 22050), i = e2.createBufferSource();
+      i.buffer = t2, i.connect(e2.destination), i.start(0), "running" === e2.state && this._DetachUnblockEvents();
+    }
+    GetAudioContext() {
+      return this._audioContext;
+    }
+    GetAudioCurrentTime() {
+      return this._audioContext.currentTime;
+    }
+    GetDestinationNode() {
+      return this._destinationNode;
+    }
+    GetDestinationForTag(e2) {
+      const t2 = this._effects.get(e2.toLowerCase());
+      return t2 ? t2[0].GetInputNode() : this.GetDestinationNode();
+    }
+    AddEffectForTag(e2, t2) {
+      e2 = e2.toLowerCase();
+      let i = this._effects.get(e2);
+      i || (i = [], this._effects.set(e2, i)), t2._SetIndex(i.length), t2._SetTag(e2), i.push(t2), this._ReconnectEffects(e2);
+    }
+    _ReconnectEffects(e2) {
+      let t2 = this.GetDestinationNode();
+      const i = this._effects.get(e2);
+      if (i && i.length) {
+        t2 = i[0].GetInputNode();
+        for (let e3 = 0, t3 = i.length; e3 < t3; ++e3) {
+          const s = i[e3];
+          e3 + 1 === t3 ? s.ConnectTo(this.GetDestinationNode()) : s.ConnectTo(i[e3 + 1].GetInputNode());
+        }
+      }
+      for (const i2 of this.audioInstancesByTag(e2)) i2.Reconnect(t2);
+      this._microphoneSource && this._microphoneTag === e2 && (this._microphoneSource.disconnect(), this._microphoneSource.connect(t2));
+    }
+    GetMasterVolume() {
+      return this._masterVolume;
+    }
+    IsSilent() {
+      return this._isSilent;
+    }
+    GetTimeScaleMode() {
+      return this._timeScaleMode;
+    }
+    GetTimeScale() {
+      return this._timeScale;
+    }
+    GetGameTime() {
+      return this._gameTime;
+    }
+    IsPlayMusicAsSound() {
+      return this._playMusicAsSound;
+    }
+    SupportsWebMOpus() {
+      return this._supportsWebMOpus;
+    }
+    _SetHasAnySoftwareDecodedMusic() {
+      this._hasAnySoftwareDecodedMusic = true;
+    }
+    GetPanningModel() {
+      return this._panningModel;
+    }
+    GetDistanceModel() {
+      return this._distanceModel;
+    }
+    GetReferenceDistance() {
+      return this._refDistance;
+    }
+    GetMaxDistance() {
+      return this._maxDistance;
+    }
+    GetRolloffFactor() {
+      return this._rolloffFactor;
+    }
+    DecodeAudioData(e2, t2) {
+      return t2 ? this._iRuntime._WasmDecodeWebMOpus(e2).then(((e3) => {
+        const t3 = this._audioContext.createBuffer(1, e3.length, 48e3);
+        return t3.getChannelData(0).set(e3), t3;
+      })) : new Promise(((t3, i) => {
+        this._audioContext.decodeAudioData(e2, t3, i);
+      }));
+    }
+    TryPlayMedia(e2) {
+      this._iRuntime.TryPlayMedia(e2);
+    }
+    RemovePendingPlay(e2) {
+      this._iRuntime.RemovePendingPlay(e2);
+    }
+    ReleaseInstancesForBuffer(e2) {
+      let t2 = 0;
+      for (let i = 0, s = this._audioInstances.length; i < s; ++i) {
+        const s2 = this._audioInstances[i];
+        this._audioInstances[t2] = s2, s2.GetBuffer() === e2 ? s2.Release() : ++t2;
+      }
+      this._audioInstances.length = t2;
+    }
+    ReleaseAllMusicBuffers() {
+      let e2 = 0;
+      for (let t2 = 0, i = this._audioBuffers.length; t2 < i; ++t2) {
+        const i2 = this._audioBuffers[t2];
+        this._audioBuffers[e2] = i2, i2.IsMusic() ? i2.Release() : ++e2;
+      }
+      this._audioBuffers.length = e2;
+    }
+    *audioInstancesByTag(e2) {
+      if (e2) for (const t2 of this._audioInstances) self.AudioDOMHandler.EqualsNoCase(t2.GetTag(), e2) && (yield t2);
+      else this._lastAudioInstance && !this._lastAudioInstance.HasEnded() && (yield this._lastAudioInstance);
+    }
+    async _GetAudioBuffer(e2, t2, i, s, n) {
+      for (const e3 of this._audioBuffers) if (e3.GetUrl() === t2) return await e3.Load(), e3;
+      if (n) return null;
+      s && (this._playMusicAsSound || this._hasAnySoftwareDecodedMusic) && this.ReleaseAllMusicBuffers();
+      const o = self.C3AudioBuffer.Create(this, e2, t2, i, s);
+      return this._audioBuffers.push(o), await o.Load(), o;
+    }
+    async _GetAudioInstance(e2, t2, i, s, n) {
+      for (const e3 of this._audioInstances) if (e3.GetUrl() === t2 && (e3.CanBeRecycled() || n)) return e3.SetTag(s), e3;
+      const o = (await this._GetAudioBuffer(e2, t2, i, n)).CreateInstance(s);
+      return this._audioInstances.push(o), o;
+    }
+    _AddPendingTag(e2) {
+      let t2 = this._pendingTags.get(e2);
+      if (!t2) {
+        let i = null;
+        t2 = { pendingCount: 0, promise: new Promise(((e3) => i = e3)), resolve: i }, this._pendingTags.set(e2, t2);
+      }
+      t2.pendingCount++;
+    }
+    _RemovePendingTag(e2) {
+      const t2 = this._pendingTags.get(e2);
+      if (!t2) throw new Error("expected pending tag");
+      t2.pendingCount--, 0 === t2.pendingCount && (t2.resolve(), this._pendingTags.delete(e2));
+    }
+    TagReady(e2) {
+      e2 || (e2 = this._lastPlayedTag);
+      const t2 = this._pendingTags.get(e2);
+      return t2 ? t2.promise : Promise.resolve();
+    }
+    _MaybeStartTicking() {
+      if (this._analysers.size > 0) this._StartTicking();
+      else for (const e2 of this._audioInstances) if (e2.IsActive()) return void this._StartTicking();
+    }
+    Tick() {
+      for (const e3 of this._analysers) e3.Tick();
+      const e2 = this.GetAudioCurrentTime();
+      for (const t3 of this._audioInstances) t3.Tick(e2);
+      const t2 = this._audioInstances.filter(((e3) => e3.IsActive())).map(((e3) => e3.GetState()));
+      this.PostToRuntime("state", { tickCount: this._lastTickCount, audioInstances: t2, analysers: [...this._analysers].map(((e3) => e3.GetData())) }), 0 === t2.length && 0 === this._analysers.size && this._StopTicking();
+    }
+    PostTrigger(e2, t2, i) {
+      this.PostToRuntime("trigger", { type: e2, tag: t2, aiid: i });
+    }
+    async _Play(e2) {
+      const t2 = e2.originalUrl, i = e2.url, s = e2.type, n = e2.isMusic, o = e2.tag, a = e2.isLooping, r = e2.vol, d = e2.pos, c = e2.panning;
+      let l = e2.off;
+      if (l > 0 && !e2.trueClock) if (this._audioContext.getOutputTimestamp) {
+        const e3 = this._audioContext.getOutputTimestamp();
+        l = l - e3.performanceTime / 1e3 + e3.contextTime;
+      } else l = l - performance.now() / 1e3 + this._audioContext.currentTime;
+      this._lastPlayedTag = o, this._AddPendingTag(o);
+      try {
+        this._lastAudioInstance = await this._GetAudioInstance(t2, i, s, o, n), c ? (this._lastAudioInstance.SetPannerEnabled(true), this._lastAudioInstance.SetPan(c.x, c.y, c.angle, c.innerAngle, c.outerAngle, c.outerGain), c.hasOwnProperty("uid") && this._lastAudioInstance.SetUID(c.uid)) : this._lastAudioInstance.SetPannerEnabled(false), this._lastAudioInstance.Play(a, r, d, l);
+      } catch (e3) {
+        return void console.error("[Construct 3] Audio: error starting playback: ", e3);
+      } finally {
+        this._RemovePendingTag(o);
+      }
+      this._StartTicking();
+    }
+    _Stop(e2) {
+      const t2 = e2.tag;
+      for (const e3 of this.audioInstancesByTag(t2)) e3.Stop();
+    }
+    _StopAll() {
+      for (const e2 of this._audioInstances) e2.Stop();
+    }
+    _SetPaused(e2) {
+      const t2 = e2.tag, i = e2.paused;
+      for (const e3 of this.audioInstancesByTag(t2)) i ? e3.Pause() : e3.Resume();
+      this._MaybeStartTicking();
+    }
+    _SetVolume(e2) {
+      const t2 = e2.tag, i = e2.vol;
+      for (const e3 of this.audioInstancesByTag(t2)) e3.SetVolume(i);
+    }
+    async _FadeVolume(e2) {
+      const t2 = e2.tag, i = e2.vol, s = e2.duration, n = e2.stopOnEnd;
+      await this.TagReady(t2);
+      for (const e3 of this.audioInstancesByTag(t2)) e3.FadeVolume(i, s, n);
+      this._MaybeStartTicking();
+    }
+    _SetMasterVolume(e2) {
+      this._masterVolume = e2.vol;
+      for (const e3 of this._audioInstances) e3._UpdateVolume();
+    }
+    _SetMuted(e2) {
+      const t2 = e2.tag, i = e2.isMuted;
+      for (const e3 of this.audioInstancesByTag(t2)) e3.SetMuted(i);
+    }
+    _SetSilent(e2) {
+      this._isSilent = e2.isSilent, this._iRuntime.SetSilent(this._isSilent);
+      for (const e3 of this._audioInstances) e3._UpdateMuted();
+    }
+    _SetLooping(e2) {
+      const t2 = e2.tag, i = e2.isLooping;
+      for (const e3 of this.audioInstancesByTag(t2)) e3.SetLooping(i);
+    }
+    async _SetPlaybackRate(e2) {
+      const t2 = e2.tag, i = e2.rate;
+      await this.TagReady(t2);
+      for (const e3 of this.audioInstancesByTag(t2)) e3.SetPlaybackRate(i);
+    }
+    async _Seek(e2) {
+      const t2 = e2.tag, i = e2.pos;
+      await this.TagReady(t2);
+      for (const e3 of this.audioInstancesByTag(t2)) e3.Seek(i);
+    }
+    async _Preload(e2) {
+      const t2 = e2.originalUrl, i = e2.url, s = e2.type, n = e2.isMusic;
+      try {
+        await this._GetAudioInstance(t2, i, s, "", n);
+      } catch (e3) {
+        console.error("[Construct 3] Audio: error preloading: ", e3);
+      }
+    }
+    async _Unload(e2) {
+      const t2 = e2.url, i = e2.type, s = e2.isMusic, n = await this._GetAudioBuffer("", t2, i, s, true);
+      if (!n) return;
+      n.Release();
+      const o = this._audioBuffers.indexOf(n);
+      -1 !== o && this._audioBuffers.splice(o, 1);
+    }
+    _UnloadAll() {
+      for (const e2 of this._audioBuffers) e2.Release();
+      this._audioBuffers.length = 0;
+    }
+    _SetSuspended(e2) {
+      const t2 = e2.isSuspended;
+      !t2 && this._audioContext.resume && this._audioContext.resume();
+      for (const e3 of this._audioInstances) e3.SetSuspended(t2);
+      t2 && this._audioContext.suspend && this._audioContext.suspend();
+    }
+    _OnTick(e2) {
+      if (this._timeScale = e2.timeScale, this._gameTime = e2.gameTime, this._lastTickCount = e2.tickCount, 0 !== this._timeScaleMode) for (const e3 of this._audioInstances) e3._UpdatePlaybackRate();
+      const t2 = e2.listenerPos;
+      t2 && this._audioContext.listener.setPosition(t2[0], t2[1], t2[2]);
+      for (const t3 of e2.instPans) {
+        const e3 = t3.uid;
+        for (const i of this._audioInstances) i.GetUID() === e3 && i.SetPanXYA(t3.x, t3.y, t3.angle);
+      }
+    }
+    async _AddEffect(e2) {
+      const t2 = e2.type, i = e2.tag, s = e2.params;
+      let n;
+      if ("filter" === t2) n = new self.C3AudioFilterFX(this, ...s);
+      else if ("delay" === t2) n = new self.C3AudioDelayFX(this, ...s);
+      else if ("convolution" === t2) {
+        let t3 = null;
+        try {
+          t3 = await this._GetAudioBuffer(e2.bufferOriginalUrl, e2.bufferUrl, e2.bufferType, false);
+        } catch (e3) {
+          return void console.log("[Construct 3] Audio: error loading convolution: ", e3);
+        }
+        n = new self.C3AudioConvolveFX(this, t3.GetAudioBuffer(), ...s), n._SetBufferInfo(e2.bufferOriginalUrl, e2.bufferUrl, e2.bufferType);
+      } else if ("flanger" === t2) n = new self.C3AudioFlangerFX(this, ...s);
+      else if ("phaser" === t2) n = new self.C3AudioPhaserFX(this, ...s);
+      else if ("gain" === t2) n = new self.C3AudioGainFX(this, ...s);
+      else if ("tremolo" === t2) n = new self.C3AudioTremoloFX(this, ...s);
+      else if ("ringmod" === t2) n = new self.C3AudioRingModFX(this, ...s);
+      else if ("distortion" === t2) n = new self.C3AudioDistortionFX(this, ...s);
+      else if ("compressor" === t2) n = new self.C3AudioCompressorFX(this, ...s);
+      else {
+        if ("analyser" !== t2) throw new Error("invalid effect type");
+        n = new self.C3AudioAnalyserFX(this, ...s);
+      }
+      this.AddEffectForTag(i, n), this._PostUpdatedFxState();
+    }
+    _SetEffectParam(e2) {
+      const t2 = e2.tag, i = e2.index, s = e2.param, n = e2.value, o = e2.ramp, a = e2.time, r = this._effects.get(t2);
+      !r || i < 0 || i >= r.length || (r[i].SetParam(s, n, o, a), this._PostUpdatedFxState());
+    }
+    _RemoveEffects(e2) {
+      const t2 = e2.tag.toLowerCase(), i = this._effects.get(t2);
+      if (i && i.length) {
+        for (const e3 of i) e3.Release();
+        this._effects.delete(t2), this._ReconnectEffects(t2);
+      }
+    }
+    _AddAnalyser(e2) {
+      this._analysers.add(e2), this._MaybeStartTicking();
+    }
+    _RemoveAnalyser(e2) {
+      this._analysers.delete(e2);
+    }
+    _PostUpdatedFxState() {
+      this._isPendingPostFxState || (this._isPendingPostFxState = true, Promise.resolve().then((() => this._DoPostUpdatedFxState())));
+    }
+    _DoPostUpdatedFxState() {
+      const e2 = {};
+      for (const [t2, i] of this._effects) e2[t2] = i.map(((e3) => e3.GetState()));
+      this.PostToRuntime("fxstate", { fxstate: e2 }), this._isPendingPostFxState = false;
+    }
+    async _OnLoadState(e2) {
+      const t2 = e2.saveLoadMode;
+      if (3 !== t2) for (const e3 of this._audioInstances) e3.IsMusic() && 1 === t2 || (e3.IsMusic() || 2 !== t2) && e3.Stop();
+      for (const e3 of this._effects.values()) for (const t3 of e3) t3.Release();
+      this._effects.clear(), this._timeScale = e2.timeScale, this._gameTime = e2.gameTime;
+      const i = e2.listenerPos;
+      this._audioContext.listener.setPosition(i[0], i[1], i[2]), this._isSilent = e2.isSilent, this._iRuntime.SetSilent(this._isSilent), this._masterVolume = e2.masterVolume;
+      const s = [];
+      for (const t3 of Object.values(e2.effects)) s.push(Promise.all(t3.map(((e3) => this._AddEffect(e3)))));
+      await Promise.all(s), await Promise.all(e2.playing.map(((e3) => this._LoadAudioInstance(e3, t2)))), this._MaybeStartTicking();
+    }
+    async _LoadAudioInstance(e2, t2) {
+      if (3 === t2) return;
+      const i = e2.bufferOriginalUrl, s = e2.bufferUrl, n = e2.bufferType, o = e2.isMusic, a = e2.tag, r = e2.isLooping, d = e2.volume, c = e2.playbackTime;
+      if (o && 1 === t2) return;
+      if (!o && 2 === t2) return;
+      let l = null;
+      try {
+        l = await this._GetAudioInstance(i, s, n, a, o);
+      } catch (e3) {
+        return void console.error("[Construct 3] Audio: error loading audio state: ", e3);
+      }
+      l.LoadPanState(e2.pan), l.Play(r, d, c, 0), e2.isPlaying || l.Pause(), l._LoadAdditionalState(e2);
+    }
+    _OnMicrophoneStream(e2, t2) {
+      this._microphoneSource && this._microphoneSource.disconnect(), this._microphoneTag = t2.toLowerCase(), this._microphoneSource = this._audioContext.createMediaStreamSource(e2), this._microphoneSource.connect(this.GetDestinationForTag(this._microphoneTag));
+    }
+    _OnGetOutputStream() {
+      return this._destMediaStreamNode || (this._destMediaStreamNode = this._audioContext.createMediaStreamDestination(), this._destinationNode.connect(this._destMediaStreamNode)), this._destMediaStreamNode.stream;
+    }
+    static EqualsNoCase(e2, t2) {
+      return e2.length === t2.length && (e2 === t2 || e2.toLowerCase() === t2.toLowerCase());
+    }
+    static ToDegrees(t2) {
+      return t2 * e;
+    }
+    static DbToLinearNoCap(e2) {
+      return Math.pow(10, e2 / 20);
+    }
+    static DbToLinear(e2) {
+      return Math.max(Math.min(self.AudioDOMHandler.DbToLinearNoCap(e2), 1), 0);
+    }
+    static LinearToDbNoCap(e2) {
+      return Math.log(e2) / Math.log(10) * 20;
+    }
+    static LinearToDb(e2) {
+      return self.AudioDOMHandler.LinearToDbNoCap(Math.max(Math.min(e2, 1), 0));
+    }
+    static e4(e2, t2) {
+      return 1 - Math.exp(-t2 * e2);
+    }
+  }, self.RuntimeInterface.AddDOMHandlerClass(self.AudioDOMHandler);
+}
+self.C3AudioBuffer = class {
+  constructor(e, t, i, s, n) {
+    this._audioDomHandler = e, this._originalUrl = t, this._url = i, this._type = s, this._isMusic = n, this._api = "", this._loadState = "not-loaded", this._loadPromise = null;
+  }
+  Release() {
+    this._loadState = "not-loaded", this._audioDomHandler = null, this._loadPromise = null;
+  }
+  static Create(e, t, i, s, n) {
+    const o = "audio/webm; codecs=opus" === s && !e.SupportsWebMOpus();
+    return n && o && e._SetHasAnySoftwareDecodedMusic(), !n || e.IsPlayMusicAsSound() || o ? new self.C3WebAudioBuffer(e, t, i, s, n, o) : new self.C3Html5AudioBuffer(e, t, i, s, n);
+  }
+  CreateInstance(e) {
+    return "html5" === this._api ? new self.C3Html5AudioInstance(this._audioDomHandler, this, e) : new self.C3WebAudioInstance(this._audioDomHandler, this, e);
+  }
+  _Load() {
+  }
+  Load() {
+    return this._loadPromise || (this._loadPromise = this._Load()), this._loadPromise;
+  }
+  IsLoaded() {
+  }
+  IsLoadedAndDecoded() {
+  }
+  HasFailedToLoad() {
+    return "failed" === this._loadState;
+  }
+  GetAudioContext() {
+    return this._audioDomHandler.GetAudioContext();
+  }
+  GetApi() {
+    return this._api;
+  }
+  GetOriginalUrl() {
+    return this._originalUrl;
+  }
+  GetUrl() {
+    return this._url;
+  }
+  GetContentType() {
+    return this._type;
+  }
+  IsMusic() {
+    return this._isMusic;
+  }
+  GetDuration() {
+  }
+}, self.C3Html5AudioBuffer = class extends self.C3AudioBuffer {
+  constructor(e, t, i, s, n) {
+    super(e, t, i, s, n), this._api = "html5", this._audioElem = new Audio(), this._audioElem.crossOrigin = "anonymous", this._audioElem.autoplay = false, this._audioElem.preload = "auto", this._loadResolve = null, this._loadReject = null, this._reachedCanPlayThrough = false, this._audioElem.addEventListener("canplaythrough", (() => this._reachedCanPlayThrough = true)), this._outNode = this.GetAudioContext().createGain(), this._mediaSourceNode = null, this._audioElem.addEventListener("canplay", (() => {
+      this._loadResolve && (this._loadState = "loaded", this._loadResolve(), this._loadResolve = null, this._loadReject = null), !this._mediaSourceNode && this._audioElem && (this._mediaSourceNode = this.GetAudioContext().createMediaElementSource(this._audioElem), this._mediaSourceNode.connect(this._outNode));
+    })), this.onended = null, this._audioElem.addEventListener("ended", (() => {
+      this.onended && this.onended();
+    })), this._audioElem.addEventListener("error", ((e2) => this._OnError(e2)));
+  }
+  Release() {
+    this._audioDomHandler.ReleaseInstancesForBuffer(this), this._outNode.disconnect(), this._outNode = null, this._mediaSourceNode.disconnect(), this._mediaSourceNode = null, this._audioElem && !this._audioElem.paused && this._audioElem.pause(), this.onended = null, this._audioElem = null, super.Release();
+  }
+  _Load() {
+    return this._loadState = "loading", new Promise(((e, t) => {
+      this._loadResolve = e, this._loadReject = t, this._audioElem.src = this._url;
+    }));
+  }
+  _OnError(e) {
+    console.error(`[Construct 3] Audio '${this._url}' error: `, e), this._loadReject && (this._loadState = "failed", this._loadReject(e), this._loadResolve = null, this._loadReject = null);
+  }
+  IsLoaded() {
+    const e = this._audioElem.readyState >= 4;
+    return e && (this._reachedCanPlayThrough = true), e || this._reachedCanPlayThrough;
+  }
+  IsLoadedAndDecoded() {
+    return this.IsLoaded();
+  }
+  GetAudioElement() {
+    return this._audioElem;
+  }
+  GetOutputNode() {
+    return this._outNode;
+  }
+  GetDuration() {
+    return this._audioElem.duration;
+  }
+}, self.C3WebAudioBuffer = class extends self.C3AudioBuffer {
+  constructor(e, t, i, s, n, o) {
+    super(e, t, i, s, n), this._api = "webaudio", this._audioData = null, this._audioBuffer = null, this._needsSoftwareDecode = !!o;
+  }
+  Release() {
+    this._audioDomHandler.ReleaseInstancesForBuffer(this), this._audioData = null, this._audioBuffer = null, super.Release();
+  }
+  async _Fetch() {
+    if (this._audioData) return this._audioData;
+    const e = this._audioDomHandler.GetRuntimeInterface();
+    if ("cordova" === e.GetExportType() && e.IsRelativeURL(this._url) && "file:" === location.protocol) this._audioData = await e.CordovaFetchLocalFileAsArrayBuffer(this._url);
+    else {
+      const e2 = await fetch(this._url);
+      if (!e2.ok) throw new Error(`error fetching audio data: ${e2.status} ${e2.statusText}`);
+      this._audioData = await e2.arrayBuffer();
+    }
+  }
+  async _Decode() {
+    if (this._audioBuffer) return this._audioBuffer;
+    this._audioBuffer = await this._audioDomHandler.DecodeAudioData(this._audioData, this._needsSoftwareDecode), this._audioData = null;
+  }
+  async _Load() {
+    try {
+      this._loadState = "loading", await this._Fetch(), await this._Decode(), this._loadState = "loaded";
+    } catch (e) {
+      this._loadState = "failed", console.error(`[Construct 3] Failed to load audio '${this._url}': `, e);
+    }
+  }
+  IsLoaded() {
+    return !(!this._audioData && !this._audioBuffer);
+  }
+  IsLoadedAndDecoded() {
+    return !!this._audioBuffer;
+  }
+  GetAudioBuffer() {
+    return this._audioBuffer;
+  }
+  GetDuration() {
+    return this._audioBuffer ? this._audioBuffer.duration : 0;
+  }
+};
+{
+  let e = 0;
+  self.C3AudioInstance = class {
+    constructor(t, i, s) {
+      this._audioDomHandler = t, this._buffer = i, this._tag = s, this._aiId = e++, this._gainNode = this.GetAudioContext().createGain(), this._gainNode.connect(this.GetDestinationNode()), this._pannerNode = null, this._isPannerEnabled = false, this._isStopped = true, this._isPaused = false, this._resumeMe = false, this._isLooping = false, this._volume = 1, this._isMuted = false, this._playbackRate = 1;
+      const n = this._audioDomHandler.GetTimeScaleMode();
+      this._isTimescaled = 1 === n && !this.IsMusic() || 2 === n, this._instUid = -1, this._fadeEndTime = -1, this._stopOnFadeEnd = false;
+    }
+    Release() {
+      this._audioDomHandler = null, this._buffer = null, this._pannerNode && (this._pannerNode.disconnect(), this._pannerNode = null), this._gainNode.disconnect(), this._gainNode = null;
+    }
+    GetAudioContext() {
+      return this._audioDomHandler.GetAudioContext();
+    }
+    GetDestinationNode() {
+      return this._audioDomHandler.GetDestinationForTag(this._tag);
+    }
+    GetMasterVolume() {
+      return this._audioDomHandler.GetMasterVolume();
+    }
+    GetCurrentTime() {
+      return this._isTimescaled ? this._audioDomHandler.GetGameTime() : performance.now() / 1e3;
+    }
+    GetOriginalUrl() {
+      return this._buffer.GetOriginalUrl();
+    }
+    GetUrl() {
+      return this._buffer.GetUrl();
+    }
+    GetContentType() {
+      return this._buffer.GetContentType();
+    }
+    GetBuffer() {
+      return this._buffer;
+    }
+    IsMusic() {
+      return this._buffer.IsMusic();
+    }
+    SetTag(e2) {
+      this._tag = e2;
+    }
+    GetTag() {
+      return this._tag;
+    }
+    GetAiId() {
+      return this._aiId;
+    }
+    HasEnded() {
+    }
+    CanBeRecycled() {
+    }
+    IsPlaying() {
+      return !this._isStopped && !this._isPaused && !this.HasEnded();
+    }
+    IsActive() {
+      return !this._isStopped && !this.HasEnded();
+    }
+    GetPlaybackTime(e2) {
+    }
+    GetDuration(e2) {
+      let t = this._buffer.GetDuration();
+      return e2 && (t /= this._playbackRate || 1e-3), t;
+    }
+    Play(e2, t, i, s) {
+    }
+    Stop() {
+    }
+    Pause() {
+    }
+    IsPaused() {
+      return this._isPaused;
+    }
+    Resume() {
+    }
+    SetVolume(e2) {
+      this._volume = e2, this._gainNode.gain.cancelScheduledValues(0), this._fadeEndTime = -1, this._gainNode.gain.value = this.GetOverallVolume();
+    }
+    FadeVolume(e2, t, i) {
+      if (this.IsMuted()) return;
+      e2 *= this.GetMasterVolume();
+      const s = this._gainNode.gain;
+      s.cancelScheduledValues(0);
+      const n = this._audioDomHandler.GetAudioCurrentTime(), o = n + t;
+      s.setValueAtTime(s.value, n), s.linearRampToValueAtTime(e2, o), this._volume = e2, this._fadeEndTime = o, this._stopOnFadeEnd = i;
+    }
+    _UpdateVolume() {
+      this.SetVolume(this._volume);
+    }
+    Tick(e2) {
+      -1 !== this._fadeEndTime && e2 >= this._fadeEndTime && (this._fadeEndTime = -1, this._stopOnFadeEnd && this.Stop(), this._audioDomHandler.PostTrigger("fade-ended", this._tag, this._aiId));
+    }
+    GetOverallVolume() {
+      const e2 = this._volume * this.GetMasterVolume();
+      return isFinite(e2) ? e2 : 0;
+    }
+    SetMuted(e2) {
+      e2 = !!e2, this._isMuted !== e2 && (this._isMuted = e2, this._UpdateMuted());
+    }
+    IsMuted() {
+      return this._isMuted;
+    }
+    IsSilent() {
+      return this._audioDomHandler.IsSilent();
+    }
+    _UpdateMuted() {
+    }
+    SetLooping(e2) {
+    }
+    IsLooping() {
+      return this._isLooping;
+    }
+    SetPlaybackRate(e2) {
+      this._playbackRate !== e2 && (this._playbackRate = e2, this._UpdatePlaybackRate());
+    }
+    _UpdatePlaybackRate() {
+    }
+    GetPlaybackRate() {
+      return this._playbackRate;
+    }
+    Seek(e2) {
+    }
+    SetSuspended(e2) {
+    }
+    SetPannerEnabled(e2) {
+      e2 = !!e2, this._isPannerEnabled !== e2 && (this._isPannerEnabled = e2, this._isPannerEnabled ? (this._pannerNode || (this._pannerNode = this.GetAudioContext().createPanner(), this._pannerNode.panningModel = this._audioDomHandler.GetPanningModel(), this._pannerNode.distanceModel = this._audioDomHandler.GetDistanceModel(), this._pannerNode.refDistance = this._audioDomHandler.GetReferenceDistance(), this._pannerNode.maxDistance = this._audioDomHandler.GetMaxDistance(), this._pannerNode.rolloffFactor = this._audioDomHandler.GetRolloffFactor()), this._gainNode.disconnect(), this._gainNode.connect(this._pannerNode), this._pannerNode.connect(this.GetDestinationNode())) : (this._pannerNode.disconnect(), this._gainNode.disconnect(), this._gainNode.connect(this.GetDestinationNode())));
+    }
+    SetPan(e2, t, i, s, n, o) {
+      if (!this._isPannerEnabled) return;
+      this.SetPanXYA(e2, t, i);
+      const a = self.AudioDOMHandler.ToDegrees;
+      this._pannerNode.coneInnerAngle = a(s), this._pannerNode.coneOuterAngle = a(n), this._pannerNode.coneOuterGain = o;
+    }
+    SetPanXYA(e2, t, i) {
+      this._isPannerEnabled && (this._pannerNode.setPosition(e2, t, 0), this._pannerNode.setOrientation(Math.cos(i), Math.sin(i), 0));
+    }
+    SetUID(e2) {
+      this._instUid = e2;
+    }
+    GetUID() {
+      return this._instUid;
+    }
+    GetResumePosition() {
+    }
+    Reconnect(e2) {
+      const t = this._pannerNode || this._gainNode;
+      t.disconnect(), t.connect(e2);
+    }
+    GetState() {
+      return { aiid: this.GetAiId(), tag: this._tag, duration: this.GetDuration(), volume: this._volume, isPlaying: this.IsPlaying(), playbackTime: this.GetPlaybackTime(), playbackRate: this.GetPlaybackRate(), uid: this._instUid, bufferOriginalUrl: this.GetOriginalUrl(), bufferUrl: "", bufferType: this.GetContentType(), isMusic: this.IsMusic(), isLooping: this.IsLooping(), isMuted: this.IsMuted(), resumePosition: this.GetResumePosition(), pan: this.GetPanState() };
+    }
+    _LoadAdditionalState(e2) {
+      this.SetPlaybackRate(e2.playbackRate), this.SetMuted(e2.isMuted);
+    }
+    GetPanState() {
+      if (!this._pannerNode) return null;
+      const e2 = this._pannerNode;
+      return { pos: [e2.positionX.value, e2.positionY.value, e2.positionZ.value], orient: [e2.orientationX.value, e2.orientationY.value, e2.orientationZ.value], cia: e2.coneInnerAngle, coa: e2.coneOuterAngle, cog: e2.coneOuterGain, uid: this._instUid };
+    }
+    LoadPanState(e2) {
+      if (!e2) return void this.SetPannerEnabled(false);
+      this.SetPannerEnabled(true);
+      const t = this._pannerNode;
+      t.setPosition(...t.pos), t.setOrientation(...t.orient), t.coneInnerAngle = t.cia, t.coneOuterAngle = t.coa, t.coneOuterGain = t.cog, this._instUid = t.uid;
+    }
+  };
+}
+self.C3Html5AudioInstance = class extends self.C3AudioInstance {
+  constructor(e, t, i) {
+    super(e, t, i), this._buffer.GetOutputNode().connect(this._gainNode), this._buffer.onended = () => this._OnEnded();
+  }
+  Release() {
+    this.Stop(), this._buffer.GetOutputNode().disconnect(), super.Release();
+  }
+  GetAudioElement() {
+    return this._buffer.GetAudioElement();
+  }
+  _OnEnded() {
+    this._isStopped = true, this._instUid = -1, this._audioDomHandler.PostTrigger("ended", this._tag, this._aiId);
+  }
+  HasEnded() {
+    return this.GetAudioElement().ended;
+  }
+  CanBeRecycled() {
+    return !!this._isStopped || this.HasEnded();
+  }
+  GetPlaybackTime(e) {
+    let t = this.GetAudioElement().currentTime;
+    return e && (t *= this._playbackRate), this._isLooping || (t = Math.min(t, this.GetDuration())), t;
+  }
+  Play(e, t, i, s) {
+    const n = this.GetAudioElement();
+    if (1 !== n.playbackRate && (n.playbackRate = 1), n.loop !== e && (n.loop = e), this.SetVolume(t), n.muted && (n.muted = false), n.currentTime !== i) try {
+      n.currentTime = i;
+    } catch (e2) {
+      console.warn(`[Construct 3] Exception seeking audio '${this._buffer.GetUrl()}' to position '${i}': `, e2);
+    }
+    this._audioDomHandler.TryPlayMedia(n), this._isStopped = false, this._isPaused = false, this._isLooping = e, this._playbackRate = 1;
+  }
+  Stop() {
+    const e = this.GetAudioElement();
+    e.paused || e.pause(), this._audioDomHandler.RemovePendingPlay(e), this._isStopped = true, this._isPaused = false, this._instUid = -1;
+  }
+  Pause() {
+    if (this._isPaused || this._isStopped || this.HasEnded()) return;
+    const e = this.GetAudioElement();
+    e.paused || e.pause(), this._audioDomHandler.RemovePendingPlay(e), this._isPaused = true;
+  }
+  Resume() {
+    !this._isPaused || this._isStopped || this.HasEnded() || (this._audioDomHandler.TryPlayMedia(this.GetAudioElement()), this._isPaused = false);
+  }
+  _UpdateMuted() {
+    this.GetAudioElement().muted = this._isMuted || this.IsSilent();
+  }
+  SetLooping(e) {
+    e = !!e, this._isLooping !== e && (this._isLooping = e, this.GetAudioElement().loop = e);
+  }
+  _UpdatePlaybackRate() {
+    let e = this._playbackRate;
+    this._isTimescaled && (e *= this._audioDomHandler.GetTimeScale());
+    try {
+      this.GetAudioElement().playbackRate = e;
+    } catch (t) {
+      console.warn(`[Construct 3] Unable to set playback rate '${e}':`, t);
+    }
+  }
+  Seek(e) {
+    if (!this._isStopped && !this.HasEnded()) try {
+      this.GetAudioElement().currentTime = e;
+    } catch (t) {
+      console.warn(`[Construct 3] Error seeking audio to '${e}': `, t);
+    }
+  }
+  GetResumePosition() {
+    return this.GetPlaybackTime();
+  }
+  SetSuspended(e) {
+    e ? this.IsPlaying() ? (this.GetAudioElement().pause(), this._resumeMe = true) : this._resumeMe = false : this._resumeMe && (this._audioDomHandler.TryPlayMedia(this.GetAudioElement()), this._resumeMe = false);
+  }
+}, self.C3WebAudioInstance = class extends self.C3AudioInstance {
+  constructor(e, t, i) {
+    super(e, t, i), this._bufferSource = null, this._onended_handler = (e2) => this._OnEnded(e2), this._hasPlaybackEnded = true, this._activeSource = null, this._startTime = 0, this._resumePosition = 0, this._muteVol = 1;
+  }
+  Release() {
+    this.Stop(), this._ReleaseBufferSource(), this._onended_handler = null, super.Release();
+  }
+  _ReleaseBufferSource() {
+    this._bufferSource && this._bufferSource.disconnect(), this._bufferSource = null, this._activeSource = null;
+  }
+  _OnEnded(e) {
+    this._isPaused || this._resumeMe || e.target === this._activeSource && (this._hasPlaybackEnded = true, this._isStopped = true, this._instUid = -1, this._ReleaseBufferSource(), this._audioDomHandler.PostTrigger("ended", this._tag, this._aiId));
+  }
+  HasEnded() {
+    return !(!this._isStopped && this._bufferSource && this._bufferSource.loop) && !this._isPaused && this._hasPlaybackEnded;
+  }
+  CanBeRecycled() {
+    return !(this._bufferSource && !this._isStopped) || this.HasEnded();
+  }
+  GetPlaybackTime(e) {
+    let t = 0;
+    return t = this._isPaused ? this._resumePosition : this.GetCurrentTime() - this._startTime, e && (t *= this._playbackRate), this._isLooping || (t = Math.min(t, this.GetDuration())), t;
+  }
+  Play(e, t, i, s) {
+    this._muteVol = 1, this.SetVolume(t), this._ReleaseBufferSource(), this._bufferSource = this.GetAudioContext().createBufferSource(), this._bufferSource.buffer = this._buffer.GetAudioBuffer(), this._bufferSource.connect(this._gainNode), this._activeSource = this._bufferSource, this._bufferSource.onended = this._onended_handler, this._bufferSource.loop = e, this._bufferSource.start(s, i), this._hasPlaybackEnded = false, this._isStopped = false, this._isPaused = false, this._isLooping = e, this._playbackRate = 1, this._startTime = this.GetCurrentTime() - i;
+  }
+  Stop() {
+    if (this._bufferSource) try {
+      this._bufferSource.stop(0);
+    } catch (e) {
+    }
+    this._isStopped = true, this._isPaused = false, this._instUid = -1;
+  }
+  Pause() {
+    this._isPaused || this._isStopped || this.HasEnded() || (this._resumePosition = this.GetPlaybackTime(true), this._isLooping && (this._resumePosition %= this.GetDuration()), this._isPaused = true, this._bufferSource.stop(0));
+  }
+  Resume() {
+    !this._isPaused || this._isStopped || this.HasEnded() || (this._ReleaseBufferSource(), this._bufferSource = this.GetAudioContext().createBufferSource(), this._bufferSource.buffer = this._buffer.GetAudioBuffer(), this._bufferSource.connect(this._gainNode), this._activeSource = this._bufferSource, this._bufferSource.onended = this._onended_handler, this._bufferSource.loop = this._isLooping, this._UpdateVolume(), this._UpdatePlaybackRate(), this._startTime = this.GetCurrentTime() - this._resumePosition / (this._playbackRate || 1e-3), this._bufferSource.start(0, this._resumePosition), this._isPaused = false);
+  }
+  GetOverallVolume() {
+    return super.GetOverallVolume() * this._muteVol;
+  }
+  _UpdateMuted() {
+    this._muteVol = this._isMuted || this.IsSilent() ? 0 : 1, this._UpdateVolume();
+  }
+  SetLooping(e) {
+    e = !!e, this._isLooping !== e && (this._isLooping = e, this._bufferSource && (this._bufferSource.loop = e));
+  }
+  _UpdatePlaybackRate() {
+    let e = this._playbackRate;
+    this._isTimescaled && (e *= this._audioDomHandler.GetTimeScale()), this._bufferSource && (this._bufferSource.playbackRate.value = e);
+  }
+  Seek(e) {
+    this._isStopped || this.HasEnded() || (this._isPaused ? this._resumePosition = e : (this.Pause(), this._resumePosition = e, this.Resume()));
+  }
+  GetResumePosition() {
+    return this._resumePosition;
+  }
+  SetSuspended(e) {
+    e ? this.IsPlaying() ? (this._resumeMe = true, this._resumePosition = this.GetPlaybackTime(true), this._isLooping && (this._resumePosition %= this.GetDuration()), this._bufferSource.stop(0)) : this._resumeMe = false : this._resumeMe && (this._ReleaseBufferSource(), this._bufferSource = this.GetAudioContext().createBufferSource(), this._bufferSource.buffer = this._buffer.GetAudioBuffer(), this._bufferSource.connect(this._gainNode), this._activeSource = this._bufferSource, this._bufferSource.onended = this._onended_handler, this._bufferSource.loop = this._isLooping, this._UpdateVolume(), this._UpdatePlaybackRate(), this._startTime = this.GetCurrentTime() - this._resumePosition / (this._playbackRate || 1e-3), this._bufferSource.start(0, this._resumePosition), this._resumeMe = false);
+  }
+  _LoadAdditionalState(e) {
+    super._LoadAdditionalState(e), this._resumePosition = e.resumePosition;
+  }
+};
+{
+  class e {
+    constructor(e2) {
+      this._audioDomHandler = e2, this._audioContext = e2.GetAudioContext(), this._index = -1, this._tag = "", this._type = "", this._params = null;
+    }
+    Release() {
+      this._audioContext = null;
+    }
+    _SetIndex(e2) {
+      this._index = e2;
+    }
+    GetIndex() {
+      return this._index;
+    }
+    _SetTag(e2) {
+      this._tag = e2;
+    }
+    GetTag() {
+      return this._tag;
+    }
+    CreateGain() {
+      return this._audioContext.createGain();
+    }
+    GetInputNode() {
+    }
+    ConnectTo(e2) {
+    }
+    SetAudioParam(e2, t, i, s) {
+      if (e2.cancelScheduledValues(0), 0 === s) return void (e2.value = t);
+      const n = this._audioContext.currentTime;
+      switch (s += n, i) {
+        case 0:
+          e2.setValueAtTime(t, s);
+          break;
+        case 1:
+          e2.setValueAtTime(e2.value, n), e2.linearRampToValueAtTime(t, s);
+          break;
+        case 2:
+          e2.setValueAtTime(e2.value, n), e2.exponentialRampToValueAtTime(t, s);
+      }
+    }
+    GetState() {
+      return { type: this._type, tag: this._tag, params: this._params };
+    }
+  }
+  self.C3AudioFilterFX = class extends e {
+    constructor(e2, t, i, s, n, o, a) {
+      super(e2), this._type = "filter", this._params = [t, i, s, n, o, a], this._inputNode = this.CreateGain(), this._wetNode = this.CreateGain(), this._wetNode.gain.value = a, this._dryNode = this.CreateGain(), this._dryNode.gain.value = 1 - a, this._filterNode = this._audioContext.createBiquadFilter(), this._filterNode.type = t, this._filterNode.frequency.value = i, this._filterNode.detune.value = s, this._filterNode.Q.value = n, this._filterNode.gain.vlaue = o, this._inputNode.connect(this._filterNode), this._inputNode.connect(this._dryNode), this._filterNode.connect(this._wetNode);
+    }
+    Release() {
+      this._inputNode.disconnect(), this._filterNode.disconnect(), this._wetNode.disconnect(), this._dryNode.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._wetNode.disconnect(), this._wetNode.connect(e2), this._dryNode.disconnect(), this._dryNode.connect(e2);
+    }
+    GetInputNode() {
+      return this._inputNode;
+    }
+    SetParam(e2, t, i, s) {
+      switch (e2) {
+        case 0:
+          t = Math.max(Math.min(t / 100, 1), 0), this._params[5] = t, this.SetAudioParam(this._wetNode.gain, t, i, s), this.SetAudioParam(this._dryNode.gain, 1 - t, i, s);
+          break;
+        case 1:
+          this._params[1] = t, this.SetAudioParam(this._filterNode.frequency, t, i, s);
+          break;
+        case 2:
+          this._params[2] = t, this.SetAudioParam(this._filterNode.detune, t, i, s);
+          break;
+        case 3:
+          this._params[3] = t, this.SetAudioParam(this._filterNode.Q, t, i, s);
+          break;
+        case 4:
+          this._params[4] = t, this.SetAudioParam(this._filterNode.gain, t, i, s);
+      }
+    }
+  }, self.C3AudioDelayFX = class extends e {
+    constructor(e2, t, i, s) {
+      super(e2), this._type = "delay", this._params = [t, i, s], this._inputNode = this.CreateGain(), this._wetNode = this.CreateGain(), this._wetNode.gain.value = s, this._dryNode = this.CreateGain(), this._dryNode.gain.value = 1 - s, this._mainNode = this.CreateGain(), this._delayNode = this._audioContext.createDelay(t), this._delayNode.delayTime.value = t, this._delayGainNode = this.CreateGain(), this._delayGainNode.gain.value = i, this._inputNode.connect(this._mainNode), this._inputNode.connect(this._dryNode), this._mainNode.connect(this._wetNode), this._mainNode.connect(this._delayNode), this._delayNode.connect(this._delayGainNode), this._delayGainNode.connect(this._mainNode);
+    }
+    Release() {
+      this._inputNode.disconnect(), this._wetNode.disconnect(), this._dryNode.disconnect(), this._mainNode.disconnect(), this._delayNode.disconnect(), this._delayGainNode.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._wetNode.disconnect(), this._wetNode.connect(e2), this._dryNode.disconnect(), this._dryNode.connect(e2);
+    }
+    GetInputNode() {
+      return this._inputNode;
+    }
+    SetParam(e2, t, i, s) {
+      const n = self.AudioDOMHandler.DbToLinear;
+      switch (e2) {
+        case 0:
+          t = Math.max(Math.min(t / 100, 1), 0), this._params[2] = t, this.SetAudioParam(this._wetNode.gain, t, i, s), this.SetAudioParam(this._dryNode.gain, 1 - t, i, s);
+          break;
+        case 4:
+          this._params[1] = n(t), this.SetAudioParam(this._delayGainNode.gain, n(t), i, s);
+          break;
+        case 5:
+          this._params[0] = t, this.SetAudioParam(this._delayNode.delayTime, t, i, s);
+      }
+    }
+  }, self.C3AudioConvolveFX = class extends e {
+    constructor(e2, t, i, s) {
+      super(e2), this._type = "convolution", this._params = [i, s], this._bufferOriginalUrl = "", this._bufferUrl = "", this._bufferType = "", this._inputNode = this.CreateGain(), this._wetNode = this.CreateGain(), this._wetNode.gain.value = s, this._dryNode = this.CreateGain(), this._dryNode.gain.value = 1 - s, this._convolveNode = this._audioContext.createConvolver(), this._convolveNode.normalize = i, this._convolveNode.buffer = t, this._inputNode.connect(this._convolveNode), this._inputNode.connect(this._dryNode), this._convolveNode.connect(this._wetNode);
+    }
+    Release() {
+      this._inputNode.disconnect(), this._convolveNode.disconnect(), this._wetNode.disconnect(), this._dryNode.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._wetNode.disconnect(), this._wetNode.connect(e2), this._dryNode.disconnect(), this._dryNode.connect(e2);
+    }
+    GetInputNode() {
+      return this._inputNode;
+    }
+    SetParam(e2, t, i, s) {
+      0 === e2 && (t = Math.max(Math.min(t / 100, 1), 0), this._params[1] = t, this.SetAudioParam(this._wetNode.gain, t, i, s), this.SetAudioParam(this._dryNode.gain, 1 - t, i, s));
+    }
+    _SetBufferInfo(e2, t, i) {
+      this._bufferOriginalUrl = e2, this._bufferUrl = t, this._bufferType = i;
+    }
+    GetState() {
+      const e2 = super.GetState();
+      return e2.bufferOriginalUrl = this._bufferOriginalUrl, e2.bufferUrl = "", e2.bufferType = this._bufferType, e2;
+    }
+  }, self.C3AudioFlangerFX = class extends e {
+    constructor(e2, t, i, s, n, o) {
+      super(e2), this._type = "flanger", this._params = [t, i, s, n, o], this._inputNode = this.CreateGain(), this._dryNode = this.CreateGain(), this._dryNode.gain.value = 1 - o / 2, this._wetNode = this.CreateGain(), this._wetNode.gain.value = o / 2, this._feedbackNode = this.CreateGain(), this._feedbackNode.gain.value = n, this._delayNode = this._audioContext.createDelay(t + i), this._delayNode.delayTime.value = t, this._oscNode = this._audioContext.createOscillator(), this._oscNode.frequency.value = s, this._oscGainNode = this.CreateGain(), this._oscGainNode.gain.value = i, this._inputNode.connect(this._delayNode), this._inputNode.connect(this._dryNode), this._delayNode.connect(this._wetNode), this._delayNode.connect(this._feedbackNode), this._feedbackNode.connect(this._delayNode), this._oscNode.connect(this._oscGainNode), this._oscGainNode.connect(this._delayNode.delayTime), this._oscNode.start(0);
+    }
+    Release() {
+      this._oscNode.stop(0), this._inputNode.disconnect(), this._delayNode.disconnect(), this._oscNode.disconnect(), this._oscGainNode.disconnect(), this._dryNode.disconnect(), this._wetNode.disconnect(), this._feedbackNode.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._wetNode.disconnect(), this._wetNode.connect(e2), this._dryNode.disconnect(), this._dryNode.connect(e2);
+    }
+    GetInputNode() {
+      return this._inputNode;
+    }
+    SetParam(e2, t, i, s) {
+      switch (e2) {
+        case 0:
+          t = Math.max(Math.min(t / 100, 1), 0), this._params[4] = t, this.SetAudioParam(this._wetNode.gain, t / 2, i, s), this.SetAudioParam(this._dryNode.gain, 1 - t / 2, i, s);
+          break;
+        case 6:
+          this._params[1] = t / 1e3, this.SetAudioParam(this._oscGainNode.gain, t / 1e3, i, s);
+          break;
+        case 7:
+          this._params[2] = t, this.SetAudioParam(this._oscNode.frequency, t, i, s);
+          break;
+        case 8:
+          this._params[3] = t / 100, this.SetAudioParam(this._feedbackNode.gain, t / 100, i, s);
+      }
+    }
+  }, self.C3AudioPhaserFX = class extends e {
+    constructor(e2, t, i, s, n, o, a) {
+      super(e2), this._type = "phaser", this._params = [t, i, s, n, o, a], this._inputNode = this.CreateGain(), this._dryNode = this.CreateGain(), this._dryNode.gain.value = 1 - a / 2, this._wetNode = this.CreateGain(), this._wetNode.gain.value = a / 2, this._filterNode = this._audioContext.createBiquadFilter(), this._filterNode.type = "allpass", this._filterNode.frequency.value = t, this._filterNode.detune.value = i, this._filterNode.Q.value = s, this._oscNode = this._audioContext.createOscillator(), this._oscNode.frequency.value = o, this._oscGainNode = this.CreateGain(), this._oscGainNode.gain.value = n, this._inputNode.connect(this._filterNode), this._inputNode.connect(this._dryNode), this._filterNode.connect(this._wetNode), this._oscNode.connect(this._oscGainNode), this._oscGainNode.connect(this._filterNode.frequency), this._oscNode.start(0);
+    }
+    Release() {
+      this._oscNode.stop(0), this._inputNode.disconnect(), this._filterNode.disconnect(), this._oscNode.disconnect(), this._oscGainNode.disconnect(), this._dryNode.disconnect(), this._wetNode.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._wetNode.disconnect(), this._wetNode.connect(e2), this._dryNode.disconnect(), this._dryNode.connect(e2);
+    }
+    GetInputNode() {
+      return this._inputNode;
+    }
+    SetParam(e2, t, i, s) {
+      switch (e2) {
+        case 0:
+          t = Math.max(Math.min(t / 100, 1), 0), this._params[5] = t, this.SetAudioParam(this._wetNode.gain, t / 2, i, s), this.SetAudioParam(this._dryNode.gain, 1 - t / 2, i, s);
+          break;
+        case 1:
+          this._params[0] = t, this.SetAudioParam(this._filterNode.frequency, t, i, s);
+          break;
+        case 2:
+          this._params[1] = t, this.SetAudioParam(this._filterNode.detune, t, i, s);
+          break;
+        case 3:
+          this._params[2] = t, this.SetAudioParam(this._filterNode.Q, t, i, s);
+          break;
+        case 6:
+          this._params[3] = t, this.SetAudioParam(this._oscGainNode.gain, t, i, s);
+          break;
+        case 7:
+          this._params[4] = t, this.SetAudioParam(this._oscNode.frequency, t, i, s);
+      }
+    }
+  }, self.C3AudioGainFX = class extends e {
+    constructor(e2, t) {
+      super(e2), this._type = "gain", this._params = [t], this._node = this.CreateGain(), this._node.gain.value = t;
+    }
+    Release() {
+      this._node.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._node.disconnect(), this._node.connect(e2);
+    }
+    GetInputNode() {
+      return this._node;
+    }
+    SetParam(e2, t, i, s) {
+      const n = self.AudioDOMHandler.DbToLinear;
+      4 === e2 && (this._params[0] = n(t), this.SetAudioParam(this._node.gain, n(t), i, s));
+    }
+  }, self.C3AudioTremoloFX = class extends e {
+    constructor(e2, t, i) {
+      super(e2), this._type = "tremolo", this._params = [t, i], this._node = this.CreateGain(), this._node.gain.value = 1 - i / 2, this._oscNode = this._audioContext.createOscillator(), this._oscNode.frequency.value = t, this._oscGainNode = this.CreateGain(), this._oscGainNode.gain.value = i / 2, this._oscNode.connect(this._oscGainNode), this._oscGainNode.connect(this._node.gain), this._oscNode.start(0);
+    }
+    Release() {
+      this._oscNode.stop(0), this._oscNode.disconnect(), this._oscGainNode.disconnect(), this._node.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._node.disconnect(), this._node.connect(e2);
+    }
+    GetInputNode() {
+      return this._node;
+    }
+    SetParam(e2, t, i, s) {
+      switch (e2) {
+        case 0:
+          t = Math.max(Math.min(t / 100, 1), 0), this._params[1] = t, this.SetAudioParam(this._node.gain.value, 1 - t / 2, i, s), this.SetAudioParam(this._oscGainNode.gain.value, t / 2, i, s);
+          break;
+        case 7:
+          this._params[0] = t, this.SetAudioParam(this._oscNode.frequency, t, i, s);
+      }
+    }
+  }, self.C3AudioRingModFX = class extends e {
+    constructor(e2, t, i) {
+      super(e2), this._type = "ringmod", this._params = [t, i], this._inputNode = this.CreateGain(), this._wetNode = this.CreateGain(), this._wetNode.gain.value = i, this._dryNode = this.CreateGain(), this._dryNode.gain.value = 1 - i, this._ringNode = this.CreateGain(), this._ringNode.gain.value = 0, this._oscNode = this._audioContext.createOscillator(), this._oscNode.frequency.value = t, this._oscNode.connect(this._ringNode.gain), this._oscNode.start(0), this._inputNode.connect(this._ringNode), this._inputNode.connect(this._dryNode), this._ringNode.connect(this._wetNode);
+    }
+    Release() {
+      this._oscNode.stop(0), this._oscNode.disconnect(), this._ringNode.disconnect(), this._inputNode.disconnect(), this._wetNode.disconnect(), this._dryNode.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._wetNode.disconnect(), this._wetNode.connect(e2), this._dryNode.disconnect(), this._dryNode.connect(e2);
+    }
+    GetInputNode() {
+      return this._inputNode;
+    }
+    SetParam(e2, t, i, s) {
+      switch (e2) {
+        case 0:
+          t = Math.max(Math.min(t / 100, 1), 0), this._params[1] = t, this.SetAudioParam(this._wetNode.gain, t, i, s), this.SetAudioParam(this._dryNode.gain, 1 - t, i, s);
+          break;
+        case 7:
+          this._params[0] = t, this.SetAudioParam(this._oscNode.frequency, t, i, s);
+      }
+    }
+  }, self.C3AudioDistortionFX = class extends e {
+    constructor(e2, t, i, s, n, o) {
+      super(e2), this._type = "distortion", this._params = [t, i, s, n, o], this._inputNode = this.CreateGain(), this._preGain = this.CreateGain(), this._postGain = this.CreateGain(), this._SetDrive(s, n), this._wetNode = this.CreateGain(), this._wetNode.gain.value = o, this._dryNode = this.CreateGain(), this._dryNode.gain.value = 1 - o, this._waveShaper = this._audioContext.createWaveShaper(), this._curve = new Float32Array(65536), this._GenerateColortouchCurve(t, i), this._waveShaper.curve = this._curve, this._inputNode.connect(this._preGain), this._inputNode.connect(this._dryNode), this._preGain.connect(this._waveShaper), this._waveShaper.connect(this._postGain), this._postGain.connect(this._wetNode);
+    }
+    Release() {
+      this._inputNode.disconnect(), this._preGain.disconnect(), this._waveShaper.disconnect(), this._postGain.disconnect(), this._wetNode.disconnect(), this._dryNode.disconnect(), super.Release();
+    }
+    _SetDrive(e2, t) {
+      e2 < 0.01 && (e2 = 0.01), this._preGain.gain.value = e2, this._postGain.gain.value = Math.pow(1 / e2, 0.6) * t;
+    }
+    _GenerateColortouchCurve(e2, t) {
+      const i = 32768;
+      for (let s = 0; s < i; ++s) {
+        let n = s / i;
+        n = this._Shape(n, e2, t), this._curve[i + s] = n, this._curve[i - s - 1] = -n;
+      }
+    }
+    _Shape(e2, t, i) {
+      const s = 1.05 * i * t - t, n = e2 < 0 ? -1 : 1, o = e2 < 0 ? -e2 : e2;
+      let a = o < t ? o : t + s * self.AudioDOMHandler.e4(o - t, 1 / s);
+      return a *= n, a;
+    }
+    ConnectTo(e2) {
+      this._wetNode.disconnect(), this._wetNode.connect(e2), this._dryNode.disconnect(), this._dryNode.connect(e2);
+    }
+    GetInputNode() {
+      return this._inputNode;
+    }
+    SetParam(e2, t, i, s) {
+      0 === e2 && (t = Math.max(Math.min(t / 100, 1), 0), this._params[4] = t, this.SetAudioParam(this._wetNode.gain, t, i, s), this.SetAudioParam(this._dryNode.gain, 1 - t, i, s));
+    }
+  }, self.C3AudioCompressorFX = class extends e {
+    constructor(e2, t, i, s, n, o) {
+      super(e2), this._type = "compressor", this._params = [t, i, s, n, o], this._node = this._audioContext.createDynamicsCompressor(), this._node.threshold.value = t, this._node.knee.value = i, this._node.ratio.value = s, this._node.attack.value = n, this._node.release.value = o;
+    }
+    Release() {
+      this._node.disconnect(), super.Release();
+    }
+    ConnectTo(e2) {
+      this._node.disconnect(), this._node.connect(e2);
+    }
+    GetInputNode() {
+      return this._node;
+    }
+    SetParam(e2, t, i, s) {
+    }
+  }, self.C3AudioAnalyserFX = class extends e {
+    constructor(e2, t, i) {
+      super(e2), this._type = "analyser", this._params = [t, i], this._node = this._audioContext.createAnalyser(), this._node.fftSize = t, this._node.smoothingTimeConstant = i, this._freqBins = new Float32Array(this._node.frequencyBinCount), this._signal = new Uint8Array(t), this._peak = 0, this._rms = 0, this._audioDomHandler._AddAnalyser(this);
+    }
+    Release() {
+      this._audioDomHandler._RemoveAnalyser(this), this._node.disconnect(), super.Release();
+    }
+    Tick() {
+      this._node.getFloatFrequencyData(this._freqBins), this._node.getByteTimeDomainData(this._signal);
+      const e2 = this._node.fftSize;
+      this._peak = 0;
+      let t = 0;
+      for (let i2 = 0; i2 < e2; ++i2) {
+        let e3 = (this._signal[i2] - 128) / 128;
+        e3 < 0 && (e3 = -e3), this._peak < e3 && (this._peak = e3), t += e3 * e3;
+      }
+      const i = self.AudioDOMHandler.LinearToDb;
+      this._peak = i(this._peak), this._rms = i(Math.sqrt(t / e2));
+    }
+    ConnectTo(e2) {
+      this._node.disconnect(), this._node.connect(e2);
+    }
+    GetInputNode() {
+      return this._node;
+    }
+    SetParam(e2, t, i, s) {
+    }
+    GetData() {
+      return { tag: this.GetTag(), index: this.GetIndex(), peak: this._peak, rms: this._rms, binCount: this._node.frequencyBinCount, freqBins: this._freqBins };
+    }
+  };
+}
+{
+  const e = "gamepad", t = class extends self.DOMHandler {
+    constructor(t2) {
+      super(t2, e), this._isSupported = !!navigator.getGamepads, this._isReady = false, this.AddRuntimeMessageHandler("is-supported", (() => this._OnTestIsSupported())), this.AddRuntimeMessageHandler("ready", (() => this._OnReady())), this.AddRuntimeMessageHandler("vibrate", ((e2) => this._OnGamepadVibrate(e2))), this.AddRuntimeMessageHandler("reset-vibrate", ((e2) => this._OnGamepadResetVibrate(e2))), window.addEventListener("gamepadconnected", ((e2) => this._OnGamepadConnected(e2))), window.addEventListener("gamepaddisconnected", ((e2) => this._OnGamepadDisconnected(e2))), window.addEventListener("unload", (() => this._OnWindowUnload()));
+    }
+    _GetActiveGamepads() {
+      return Array.from(navigator.getGamepads()).filter(((e2) => e2 && e2.connected));
+    }
+    _OnTestIsSupported(e2) {
+      return this._isSupported;
+    }
+    _OnReady() {
+      this._isReady = true;
+      for (const e2 of this._GetActiveGamepads()) this.PostToRuntime("gamepad-connected", { index: e2.index, id: e2.id });
+      this._isSupported && this._StartTicking();
+    }
+    _OnGamepadConnected(e2) {
+      if (!this._isReady) return;
+      const t2 = e2.gamepad;
+      this.PostToRuntime("gamepad-connected", { index: t2.index, id: t2.id });
+    }
+    _OnGamepadDisconnected(e2) {
+      if (!this._isReady) return;
+      const t2 = e2.gamepad;
+      this.PostToRuntime("gamepad-disconnected", { index: t2.index });
+    }
+    Tick() {
+      const e2 = this._GetActiveGamepads();
+      if (!e2.length) return;
+      const t2 = e2.map(((e3) => ({ index: e3.index, id: e3.id, buttons: e3.buttons.map(((e4) => ({ pressed: e4.pressed, value: e4.value }))), axes: e3.axes })));
+      this.PostToRuntime("input-update", t2);
+    }
+    _GetGamepadByIndex(e2) {
+      for (const t2 of this._GetActiveGamepads()) if (t2.index === e2) return t2;
+      return null;
+    }
+    async _OnGamepadVibrate(e2) {
+      const t2 = this._GetGamepadByIndex(e2.index);
+      if (!t2) return;
+      const i = t2.vibrationActuator;
+      if (i && i.playEffect) try {
+        await i.playEffect("dual-rumble", { duration: e2.duration, startDelay: 0, weakMagnitude: e2.weakMag, strongMagnitude: e2.strongMag });
+      } catch (e3) {
+        console.warn("[Gamepad] Failed to vibrate gamepad: ", e3);
+      }
+    }
+    _OnGamepadResetVibrate(e2) {
+      const t2 = this._GetGamepadByIndex(e2.index);
+      if (!t2) return;
+      const i = t2.vibrationActuator;
+      i && i.reset && i.reset();
+    }
+    _OnWindowUnload() {
+      for (const e2 of this._GetActiveGamepads()) {
+        const t2 = e2.vibrationActuator;
+        t2 && t2.reset && t2.reset();
+      }
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(t);
+}
+{
+  let t = function(e2) {
+    e2.stopPropagation();
+  }, i = function(e2) {
+    13 !== e2.which && 27 !== e2.which && e2.stopPropagation();
+  };
+  const e = "text-input";
+  const s = class extends self.DOMElementHandler {
+    constructor(t2) {
+      super(t2, e), this.AddDOMElementMessageHandler("scroll-to-bottom", ((e2) => this._OnScrollToBottom(e2)));
+    }
+    CreateElement(e2, s2) {
+      let n;
+      const o = s2.type;
+      return "textarea" === o ? (n = document.createElement("textarea"), n.style.resize = "none") : (n = document.createElement("input"), n.type = o), n.style.position = "absolute", n.autocomplete = "off", n.addEventListener("touchstart", t), n.addEventListener("touchmove", t), n.addEventListener("touchend", t), n.addEventListener("mousedown", t), n.addEventListener("mouseup", t), n.addEventListener("keydown", i), n.addEventListener("keyup", i), n.addEventListener("click", ((t2) => {
+        t2.stopPropagation(), this._PostToRuntimeElementMaybeSync("click", e2);
+      })), n.addEventListener("dblclick", ((t2) => {
+        t2.stopPropagation(), this._PostToRuntimeElementMaybeSync("dblclick", e2);
+      })), n.addEventListener("input", (() => this.PostToRuntimeElement("change", e2, { text: n.value }))), s2.id && (n.id = s2.id), this.UpdateState(n, s2), n;
+    }
+    UpdateState(e2, t2) {
+      e2.value = t2.text, e2.placeholder = t2.placeholder, e2.title = t2.title, e2.disabled = !t2.isEnabled, e2.readOnly = t2.isReadOnly, e2.spellcheck = t2.spellCheck;
+      const i2 = t2.maxLength;
+      i2 < 0 ? e2.removeAttribute("maxlength") : e2.setAttribute("maxlength", i2);
+    }
+    _OnScrollToBottom(e2) {
+      e2.scrollTop = e2.scrollHeight;
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(s);
+}
+{
+  let t = function(e2) {
+    e2.stopPropagation();
+  };
+  const e = "sliderbar";
+  const i = class extends self.DOMElementHandler {
+    constructor(t2) {
+      super(t2, e);
+    }
+    CreateElement(e2, i2) {
+      const s = document.createElement("input");
+      return s.type = "range", s.style.position = "absolute", s.style.userSelect = "none", s.style.webkitUserSelect = "none", s.addEventListener("touchstart", t), s.addEventListener("touchmove", t), s.addEventListener("touchend", t), s.addEventListener("mousedown", t), s.addEventListener("mouseup", t), s.addEventListener("keydown", t), s.addEventListener("keyup", t), s.addEventListener("click", (() => this._PostToRuntimeElementMaybeSync("click", e2))), s.addEventListener("change", (() => this.PostToRuntimeElement("change", e2, { value: parseFloat(s.value) }))), s.addEventListener("input", (() => this.PostToRuntimeElement("input", e2, { value: parseFloat(s.value) }))), i2.id && (s.id = i2.id), this.UpdateState(s, i2), s;
+    }
+    UpdateState(e2, t2) {
+      e2.max = t2.max, e2.min = t2.min, e2.step = t2.step, e2.value = t2.value, e2.disabled = !t2.isEnabled, e2.title = t2.title;
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(i);
+}
+{
+  const e = "browser", t = class extends self.DOMHandler {
+    constructor(t2) {
+      super(t2, e), this._exportType = "", this.AddRuntimeMessageHandlers([["get-initial-state", (e2) => this._OnGetInitialState(e2)], ["ready-for-sw-messages", () => this._OnReadyForSWMessages()], ["alert", (e2) => this._OnAlert(e2)], ["close", () => this._OnClose()], ["set-focus", (e2) => this._OnSetFocus(e2)], ["vibrate", (e2) => this._OnVibrate(e2)], ["lock-orientation", (e2) => this._OnLockOrientation(e2)], ["unlock-orientation", () => this._OnUnlockOrientation()], ["navigate", (e2) => this._OnNavigate(e2)], ["request-fullscreen", (e2) => this._OnRequestFullscreen(e2)], ["exit-fullscreen", () => this._OnExitFullscreen()], ["set-hash", (e2) => this._OnSetHash(e2)]]), window.addEventListener("online", (() => this._OnOnlineStateChanged(true))), window.addEventListener("offline", (() => this._OnOnlineStateChanged(false))), window.addEventListener("hashchange", (() => this._OnHashChange())), document.addEventListener("backbutton", (() => this._OnCordovaBackButton())), "undefined" != typeof Windows && Windows.UI.Core.SystemNavigationManager.getForCurrentView().addEventListener("backrequested", ((e2) => this._OnWin10BackRequested(e2)));
+    }
+    _OnGetInitialState(e2) {
+      return this._exportType = e2.exportType, { location: location.toString(), isOnline: !!navigator.onLine, referrer: document.referrer, title: document.title, isCookieEnabled: !!navigator.cookieEnabled, screenWidth: screen.width, screenHeight: screen.height, windowOuterWidth: window.outerWidth, windowOuterHeight: window.outerHeight, isScirraArcade: void 0 !== window.is_scirra_arcade };
+    }
+    _OnReadyForSWMessages() {
+      window.C3_RegisterSW && window.OfflineClientInfo && window.OfflineClientInfo.SetMessageCallback(((e2) => this.PostToRuntime("sw-message", e2.data)));
+    }
+    _OnOnlineStateChanged(e2) {
+      this.PostToRuntime("online-state", { isOnline: e2 });
+    }
+    _OnCordovaBackButton() {
+      this.PostToRuntime("backbutton");
+    }
+    _OnWin10BackRequested(e2) {
+      e2.handled = true, this.PostToRuntime("backbutton");
+    }
+    GetNWjsWindow() {
+      return "nwjs" === this._exportType ? nw.Window.get() : null;
+    }
+    _OnAlert(e2) {
+      alert(e2.message);
+    }
+    _OnClose() {
+      navigator.app && navigator.app.exitApp ? navigator.app.exitApp() : navigator.device && navigator.device.exitApp ? navigator.device.exitApp() : window.close();
+    }
+    _OnSetFocus(e2) {
+      const t2 = e2.isFocus;
+      if ("nwjs" === this._exportType) {
+        const e3 = this.GetNWjsWindow();
+        t2 ? e3.focus() : e3.blur();
+      } else t2 ? window.focus() : window.blur();
+    }
+    _OnVibrate(e2) {
+      navigator.vibrate && navigator.vibrate(e2.pattern);
+    }
+    _OnLockOrientation(e2) {
+      const t2 = e2.orientation;
+      if (screen.orientation && screen.orientation.lock) screen.orientation.lock(t2).catch(((e3) => console.warn("[Construct 3] Failed to lock orientation: ", e3)));
+      else try {
+        let e3 = false;
+        screen.lockOrientation ? e3 = screen.lockOrientation(t2) : screen.webkitLockOrientation ? e3 = screen.webkitLockOrientation(t2) : screen.mozLockOrientation ? e3 = screen.mozLockOrientation(t2) : screen.msLockOrientation && (e3 = screen.msLockOrientation(t2)), e3 || console.warn("[Construct 3] Failed to lock orientation");
+      } catch (e3) {
+        console.warn("[Construct 3] Failed to lock orientation: ", e3);
+      }
+    }
+    _OnUnlockOrientation() {
+      try {
+        screen.orientation && screen.orientation.unlock ? screen.orientation.unlock() : screen.unlockOrientation ? screen.unlockOrientation() : screen.webkitUnlockOrientation ? screen.webkitUnlockOrientation() : screen.mozUnlockOrientation ? screen.mozUnlockOrientation() : screen.msUnlockOrientation && screen.msUnlockOrientation();
+      } catch (e2) {
+      }
+    }
+    _OnNavigate(e2) {
+      const t2 = e2.type;
+      if ("back" === t2) navigator.app && navigator.app.backHistory ? navigator.app.backHistory() : window.back();
+      else if ("forward" === t2) window.forward();
+      else if ("home" === t2) window.home();
+      else if ("reload" === t2) location.reload();
+      else if ("url" === t2) {
+        const t3 = e2.url, i = e2.target, s = e2.exportType;
+        "windows-uwp" === s && "undefined" != typeof Windows ? Windows.System.Launcher.launchUriAsync(new Windows.Foundation.Uri(t3)) : self.cordova && self.cordova.InAppBrowser ? self.cordova.InAppBrowser.open(t3, "_system") : "preview" === s ? window.open(t3, "_blank") : this._isScirraArcade || (2 === i ? window.top.location = t3 : 1 === i ? window.parent.location = t3 : window.location = t3);
+      } else if ("new-window" === t2) {
+        const t3 = e2.url, i = e2.tag;
+        "windows-uwp" === e2.exportType && "undefined" != typeof Windows ? Windows.System.Launcher.launchUriAsync(new Windows.Foundation.Uri(t3)) : self.cordova && self.cordova.InAppBrowser ? self.cordova.InAppBrowser.open(t3, "_system") : window.open(t3, i);
+      }
+    }
+    _OnRequestFullscreen(e2) {
+      const t2 = { navigationUI: "auto" }, i = e2.navUI;
+      1 === i ? t2.navigationUI = "hide" : 2 === i && (t2.navigationUI = "show");
+      const s = document.documentElement;
+      s.requestFullscreen ? s.requestFullscreen(t2) : s.mozRequestFullScreen ? s.mozRequestFullScreen(t2) : s.msRequestFullscreen ? s.msRequestFullscreen(t2) : s.webkitRequestFullScreen && (void 0 !== Element.ALLOW_KEYBOARD_INPUT ? s.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT) : s.webkitRequestFullScreen());
+    }
+    _OnExitFullscreen() {
+      document.exitFullscreen ? document.exitFullscreen() : document.mozCancelFullScreen ? document.mozCancelFullScreen() : document.msExitFullscreen ? document.msExitFullscreen() : document.webkitCancelFullScreen && document.webkitCancelFullScreen();
+    }
+    _OnSetHash(e2) {
+      location.hash = e2.hash;
+    }
+    _OnHashChange() {
+      this.PostToRuntime("hashchange", { location: location.toString() });
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(t);
+}
+{
+  let t = function(e2) {
+    e2.stopPropagation();
+  };
+  const e = "progress-bar";
+  const i = class extends self.DOMElementHandler {
+    constructor(t2) {
+      super(t2, e);
+    }
+    CreateElement(e2, i2) {
+      const s = document.createElement("progress");
+      return s.style.position = "absolute", s.style.userSelect = "none", s.style.webkitUserSelect = "none", s.addEventListener("touchstart", t), s.addEventListener("touchmove", t), s.addEventListener("touchend", t), s.addEventListener("mousedown", t), s.addEventListener("mouseup", t), s.addEventListener("click", (() => this._PostToRuntimeElementMaybeSync("click", e2))), i2.id && (s.id = i2.id), this.UpdateState(s, i2), s;
+    }
+    UpdateState(e2, t2) {
+      e2.title = t2.title;
+      const i2 = t2.value, s = t2.max;
+      s > 0 && i2 >= 0 ? (e2.max = s, e2.value = i2) : (e2.removeAttribute("value"), e2.removeAttribute("max"));
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(i);
+}
+{
+  const e = "touch", t = class extends self.DOMHandler {
+    constructor(t2) {
+      super(t2, e), this.AddRuntimeMessageHandler("request-permission", ((e2) => this._OnRequestPermission(e2)));
+    }
+    async _OnRequestPermission(e2) {
+      const t2 = e2.type;
+      let i = true;
+      0 === t2 ? i = await this._RequestOrientationPermission() : 1 === t2 && (i = await this._RequestMotionPermission()), this.PostToRuntime("permission-result", { type: t2, result: i });
+    }
+    async _RequestOrientationPermission() {
+      if (!self.DeviceOrientationEvent || !self.DeviceOrientationEvent.requestPermission) return true;
+      try {
+        return "granted" === await self.DeviceOrientationEvent.requestPermission();
+      } catch (e2) {
+        return console.warn("[Touch] Failed to request orientation permission: ", e2), false;
+      }
+    }
+    async _RequestMotionPermission() {
+      if (!self.DeviceMotionEvent || !self.DeviceMotionEvent.requestPermission) return true;
+      try {
+        return "granted" === await self.DeviceMotionEvent.requestPermission();
+      } catch (e2) {
+        return console.warn("[Touch] Failed to request motion permission: ", e2), false;
+      }
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(t);
+}
+{
+  const e = "platform-info", t = class extends self.DOMHandler {
+    constructor(t2) {
+      super(t2, e), this.AddRuntimeMessageHandlers([["get-initial-state", () => this._OnGetInitialState()], ["request-wake-lock", () => this._OnRequestWakeLock()], ["release-wake-lock", () => this._OnReleaseWakeLock()]]), window.addEventListener("resize", (() => this._OnResize())), this._screenWakeLock = null;
+    }
+    _OnGetInitialState() {
+      return { screenWidth: screen.width, screenHeight: screen.height, windowOuterWidth: window.outerWidth, windowOuterHeight: window.outerHeight, safeAreaInset: this._GetSafeAreaInset(), supportsWakeLock: !!navigator.wakeLock };
+    }
+    _GetSafeAreaInset() {
+      const e2 = document.body, t2 = e2.style;
+      t2.setProperty("--temp-sai-top", "env(safe-area-inset-top)"), t2.setProperty("--temp-sai-right", "env(safe-area-inset-right)"), t2.setProperty("--temp-sai-bottom", "env(safe-area-inset-bottom)"), t2.setProperty("--temp-sai-left", "env(safe-area-inset-left)");
+      const i = getComputedStyle(e2), s = [i.getPropertyValue("--temp-sai-top"), i.getPropertyValue("--temp-sai-right"), i.getPropertyValue("--temp-sai-bottom"), i.getPropertyValue("--temp-sai-left")].map(((e3) => {
+        const t3 = parseInt(e3, 10);
+        return isFinite(t3) ? t3 : 0;
+      }));
+      return t2.removeProperty("--temp-sai-top"), t2.removeProperty("--temp-sai-right"), t2.removeProperty("--temp-sai-bottom"), t2.removeProperty("--temp-sai-left"), s;
+    }
+    _OnResize() {
+      this.PostToRuntime("window-resize", { windowOuterWidth: window.outerWidth, windowOuterHeight: window.outerHeight, safeAreaInset: this._GetSafeAreaInset() });
+    }
+    async _OnRequestWakeLock() {
+      if (!this._screenWakeLock) try {
+        this._screenWakeLock = await navigator.wakeLock.request("screen"), this._screenWakeLock.addEventListener("release", (() => this._OnWakeLockReleased())), console.log("[Construct 3] Screen wake lock acquired"), this.PostToRuntime("wake-lock-acquired");
+      } catch (e2) {
+        console.warn("[Construct 3] Failed to acquire screen wake lock: ", e2), this.PostToRuntime("wake-lock-error");
+      }
+    }
+    _OnReleaseWakeLock() {
+      this._screenWakeLock && (this._screenWakeLock.release(), this._screenWakeLock = null);
+    }
+    _OnWakeLockReleased() {
+      console.log("[Construct 3] Screen wake lock released"), this._screenWakeLock = null, this.PostToRuntime("wake-lock-released");
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(t);
+}
+{
+  let t = function(e2) {
+    e2.stopPropagation();
+  };
+  const e = "button";
+  const i = class extends self.DOMElementHandler {
+    constructor(t2) {
+      super(t2, e);
+    }
+    CreateElement(e2, i2) {
+      const s = document.createElement("input"), n = i2.isCheckbox;
+      let o = s;
+      if (n) {
+        s.type = "checkbox";
+        const e3 = document.createElement("label");
+        e3.appendChild(s), e3.appendChild(document.createTextNode("")), e3.style.fontFamily = "sans-serif", e3.style.userSelect = "none", e3.style.webkitUserSelect = "none", e3.style.display = "inline-block", e3.style.color = "black", o = e3;
+      } else s.type = "button";
+      return o.style.position = "absolute", o.addEventListener("touchstart", t), o.addEventListener("touchmove", t), o.addEventListener("touchend", t), o.addEventListener("mousedown", t), o.addEventListener("mouseup", t), o.addEventListener("keydown", t), o.addEventListener("keyup", t), s.addEventListener("click", (() => this._PostToRuntimeElementMaybeSync("click", e2, { isChecked: s.checked }))), i2.id && (s.id = i2.id), this.UpdateState(o, i2), o;
+    }
+    _GetInputElem(e2) {
+      return "input" === e2.tagName.toLowerCase() ? e2 : e2.firstChild;
+    }
+    _GetFocusElement(e2) {
+      return this._GetInputElem(e2);
+    }
+    UpdateState(e2, t2) {
+      const i2 = this._GetInputElem(e2);
+      i2.checked = t2.isChecked, i2.disabled = !t2.isEnabled, e2.title = t2.title, e2 === i2 ? i2.value = t2.text : e2.lastChild.textContent = t2.text;
+    }
+  };
+  self.RuntimeInterface.AddDOMHandlerClass(i);
+}
+
+</script> <script type="module">
+// remote:https://cdn.jsdelivr.net/gh/mamayaya1/game@f3a882424a8f28d07bdf456b251d889725c4c1e4/projects/among-us/scripts/register-sw.js
+window.C3_RegisterSW = async function() {
+  if (navigator.serviceWorker) try {
+    const e = await navigator.serviceWorker.register("sw.js", { scope: "./" });
+    console.info("Registered service worker on " + e.scope);
+  } catch (e) {
+    console.warn("Failed to register service worker: ", e);
+  }
+};
+
+</script> </body></html>
